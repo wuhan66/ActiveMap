@@ -1,0 +1,6 @@
+# Agent-only training stack. Install on top of the core ActiveMap environment.
+torch>=2.6,<3
+transformers>=5.12,<6
+accelerate>=1.6,<2
+peft>=0.17,<1
+tensorboard>=2.18,<3

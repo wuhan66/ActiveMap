@@ -1,0 +1,63 @@
+# Local environments and Python caches
+.venv/
+.conda/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Editor, operating-system, and local configuration files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+.local/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Downloaded data, derived data, checkpoints, and experiment outputs
+data/raw/*
+data/interim/*
+data/processed/*
+data/manifests/*
+!data/raw/.gitkeep
+!data/interim/.gitkeep
+!data/processed/.gitkeep
+!data/manifests/.gitkeep
+outputs/
+runs/
+artifacts/
+reports/generated/
+logs/
+wandb/
+mlruns/
+lightning_logs/
+
+# Large model and geospatial binary artifacts
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.onnx
+*.tif
+*.tiff
+*.parquet
+*.gpkg
+*.geojsonl
+*.h5
+*.hdf5
+
+# Submission, private operations, and generated release artifacts
+releases/
+private/
+secrets/
+credentials/

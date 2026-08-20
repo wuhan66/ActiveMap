@@ -1,0 +1,42 @@
+seed: 20260710
+
+data:
+  samples: ../../data/processed/smoke_updater/updater_samples.jsonl
+
+model:
+  image_channels: 3
+  prior_channels: 1
+  base_channels: 4
+  geometry_dim: 8
+  edit_classes: 4
+  dropout: 0.0
+  use_prior: true
+
+training:
+  device: auto
+  epochs: 1
+  patience: 1
+  batch_size: 8
+  num_workers: 0
+  learning_rate: 0.001
+  weight_decay: 0.0
+  grad_clip: 1.0
+
+loss:
+  segmentation: 1.0
+  segmentation_bce: 1.0
+  segmentation_dice: 1.0
+  segmentation_focal: 0.25
+  focal_gamma: 2.0
+  focal_alpha: 0.75
+  edit: 1.0
+  edit_class_weights: auto
+  edit_class_weight_power: 0.5
+  edit_label_smoothing: 0.05
+  geometry: 0.5
+  geometry_beta: 0.1
+  false_edit: 0.75
+  missed_edit: 0.25
+  confidence: 0.2
+
+output_dir: ../../outputs/smoke/updater

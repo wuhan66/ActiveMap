@@ -1,0 +1,187 @@
+{
+  "$defs": {
+    "EditOperation": {
+      "enum": [
+        "KEEP",
+        "ADD",
+        "DELETE",
+        "RESHAPE"
+      ],
+      "title": "EditOperation",
+      "type": "string"
+    },
+    "GeoJSONGeometry": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "title": "Type",
+          "type": "string"
+        },
+        "coordinates": {
+          "title": "Coordinates"
+        }
+      },
+      "required": [
+        "type",
+        "coordinates"
+      ],
+      "title": "GeoJSONGeometry",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "sample_id": {
+      "title": "Sample Id",
+      "type": "string"
+    },
+    "aoi_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Aoi Id"
+    },
+    "split": {
+      "title": "Split",
+      "type": "string"
+    },
+    "image_path": {
+      "title": "Image Path",
+      "type": "string"
+    },
+    "prior_mask_path": {
+      "title": "Prior Mask Path",
+      "type": "string"
+    },
+    "target_mask_path": {
+      "title": "Target Mask Path",
+      "type": "string"
+    },
+    "edit_type": {
+      "$ref": "#/$defs/EditOperation"
+    },
+    "geometry_delta": {
+      "items": {
+        "type": "number"
+      },
+      "title": "Geometry Delta",
+      "type": "array"
+    },
+    "valid_mask_path": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Valid Mask Path"
+    },
+    "object_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Object Id"
+    },
+    "crop_transform": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "number"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Crop Transform"
+    },
+    "crs": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Crs"
+    },
+    "prior_geometry": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/GeoJSONGeometry"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "target_geometry": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/GeoJSONGeometry"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "clear_fraction": {
+      "anyOf": [
+        {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Clear Fraction"
+    },
+    "quality_source": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Quality Source"
+    }
+  },
+  "required": [
+    "sample_id",
+    "split",
+    "image_path",
+    "prior_mask_path",
+    "target_mask_path",
+    "edit_type",
+    "geometry_delta"
+  ],
+  "title": "UpdaterSample",
+  "type": "object"
+}

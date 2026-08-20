@@ -1,0 +1,38 @@
+seed: 20260710
+
+data:
+  samples: ../../data/processed/smoke/selector_samples.jsonl
+
+model:
+  hidden_dim: 128
+  dropout: 0.10
+
+training:
+  device: auto
+  epochs: 20
+  patience: 5
+  batch_size: 32
+  num_workers: 0
+  learning_rate: 0.0003
+  weight_decay: 0.0001
+  regret_loss_weight: 0.25
+  listwise_loss_weight: 0.50
+  utility_temperature: 0.25
+  stop_loss_weight: 0.25
+  grad_clip: 1.0
+  resume: false
+
+monitoring:
+  tensorboard: true
+  pause_poll_seconds: 10
+
+ablation:
+  name: full
+  condition_on_hypothesis: true
+  drop_hypothesis_groups: []
+  drop_evidence_groups: []
+  drop_state_groups: []
+  false_edit_penalty: true
+  allow_stop: true
+
+output_dir: ../../outputs/selector/full

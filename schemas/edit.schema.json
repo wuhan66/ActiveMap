@@ -1,0 +1,66 @@
+{
+  "$defs": {
+    "EditOperation": {
+      "enum": [
+        "KEEP",
+        "ADD",
+        "DELETE",
+        "RESHAPE"
+      ],
+      "title": "EditOperation",
+      "type": "string"
+    },
+    "GeoJSONGeometry": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "title": "Type",
+          "type": "string"
+        },
+        "coordinates": {
+          "title": "Coordinates"
+        }
+      },
+      "required": [
+        "type",
+        "coordinates"
+      ],
+      "title": "GeoJSONGeometry",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "op": {
+      "$ref": "#/$defs/EditOperation"
+    },
+    "object_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Object Id"
+    },
+    "geometry": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/GeoJSONGeometry"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "required": [
+    "op"
+  ],
+  "title": "EditRecord",
+  "type": "object"
+}

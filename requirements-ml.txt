@@ -1,0 +1,7 @@
+-r requirements.txt
+
+# Install a CUDA-specific PyTorch wheel first when training on GPU:
+# https://pytorch.org/get-started/locally/
+torch>=2.4,<3
+torchvision>=0.19,<1
+tensorboard>=2.17,<3

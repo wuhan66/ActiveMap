@@ -1,0 +1,110 @@
+{
+  "$defs": {
+    "EditOperation": {
+      "enum": [
+        "KEEP",
+        "ADD",
+        "DELETE",
+        "RESHAPE"
+      ],
+      "title": "EditOperation",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "sample_id": {
+      "title": "Sample Id",
+      "type": "string"
+    },
+    "split": {
+      "title": "Split",
+      "type": "string"
+    },
+    "edit_type": {
+      "$ref": "#/$defs/EditOperation"
+    },
+    "hypothesis_features": {
+      "items": {
+        "type": "number"
+      },
+      "title": "Hypothesis Features",
+      "type": "array"
+    },
+    "state_features": {
+      "items": {
+        "type": "number"
+      },
+      "title": "State Features",
+      "type": "array"
+    },
+    "evidence_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Evidence Ids",
+      "type": "array"
+    },
+    "evidence_features": {
+      "items": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "title": "Evidence Features",
+      "type": "array"
+    },
+    "evidence_costs": {
+      "items": {
+        "type": "number"
+      },
+      "title": "Evidence Costs",
+      "type": "array"
+    },
+    "false_edit_risks": {
+      "items": {
+        "type": "number"
+      },
+      "title": "False Edit Risks",
+      "type": "array"
+    },
+    "oracle_utilities": {
+      "items": {
+        "type": "number"
+      },
+      "title": "Oracle Utilities",
+      "type": "array"
+    },
+    "stop_utility": {
+      "default": 0.0,
+      "title": "Stop Utility",
+      "type": "number"
+    },
+    "false_edit_penalty_weight": {
+      "default": 0.35,
+      "minimum": 0.0,
+      "title": "False Edit Penalty Weight",
+      "type": "number"
+    },
+    "metadata": {
+      "additionalProperties": true,
+      "title": "Metadata",
+      "type": "object"
+    }
+  },
+  "required": [
+    "sample_id",
+    "split",
+    "edit_type",
+    "hypothesis_features",
+    "state_features",
+    "evidence_ids",
+    "evidence_features",
+    "evidence_costs",
+    "false_edit_risks",
+    "oracle_utilities"
+  ],
+  "title": "SelectorSample",
+  "type": "object"
+}

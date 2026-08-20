@@ -1,0 +1,45 @@
+{
+  "$defs": {
+    "GeoToolName": {
+      "enum": [
+        "RASTER_CROP",
+        "IMAGE_QUALITY",
+        "SPECTRAL_INDEX",
+        "TEMPORAL_CHANGE",
+        "RASTER_SEGMENT",
+        "TERRAIN_ANALYSIS",
+        "VECTOR_INSPECT"
+      ],
+      "title": "GeoToolName",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "call_id": {
+      "pattern": "^[A-Za-z0-9_.-]+$",
+      "title": "Call Id",
+      "type": "string"
+    },
+    "tool": {
+      "$ref": "#/$defs/GeoToolName"
+    },
+    "inputs": {
+      "additionalProperties": true,
+      "title": "Inputs",
+      "type": "object"
+    },
+    "parameters": {
+      "additionalProperties": true,
+      "title": "Parameters",
+      "type": "object"
+    }
+  },
+  "required": [
+    "call_id",
+    "tool",
+    "inputs"
+  ],
+  "title": "GeoToolCall",
+  "type": "object"
+}

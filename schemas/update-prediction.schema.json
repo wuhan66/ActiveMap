@@ -1,0 +1,138 @@
+{
+  "$defs": {
+    "EditOperation": {
+      "enum": [
+        "KEEP",
+        "ADD",
+        "DELETE",
+        "RESHAPE"
+      ],
+      "title": "EditOperation",
+      "type": "string"
+    },
+    "GeoJSONGeometry": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "title": "Type",
+          "type": "string"
+        },
+        "coordinates": {
+          "title": "Coordinates"
+        }
+      },
+      "required": [
+        "type",
+        "coordinates"
+      ],
+      "title": "GeoJSONGeometry",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "One auditable updater prediction used by every evaluation backend.",
+  "properties": {
+    "sample_id": {
+      "title": "Sample Id",
+      "type": "string"
+    },
+    "aoi_id": {
+      "title": "Aoi Id",
+      "type": "string"
+    },
+    "target_edit": {
+      "$ref": "#/$defs/EditOperation"
+    },
+    "predicted_edit": {
+      "$ref": "#/$defs/EditOperation"
+    },
+    "confidence": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Confidence",
+      "type": "number"
+    },
+    "committed": {
+      "default": true,
+      "title": "Committed",
+      "type": "boolean"
+    },
+    "raster_iou": {
+      "anyOf": [
+        {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Raster Iou"
+    },
+    "polygon_iou": {
+      "anyOf": [
+        {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Polygon Iou"
+    },
+    "topology_valid": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Topology Valid"
+    },
+    "object_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Object Id"
+    },
+    "predicted_geometry": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/GeoJSONGeometry"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "metadata": {
+      "additionalProperties": true,
+      "title": "Metadata",
+      "type": "object"
+    }
+  },
+  "required": [
+    "sample_id",
+    "aoi_id",
+    "target_edit",
+    "predicted_edit",
+    "confidence"
+  ],
+  "title": "UpdatePrediction",
+  "type": "object"
+}

@@ -1,0 +1,303 @@
+{
+  "$defs": {
+    "CandidateHypothesis": {
+      "additionalProperties": false,
+      "properties": {
+        "op": {
+          "$ref": "#/$defs/EditOperation"
+        },
+        "object_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Object Id"
+        },
+        "geometry": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GeoJSONGeometry"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confidence"
+        }
+      },
+      "required": [
+        "op",
+        "source"
+      ],
+      "title": "CandidateHypothesis",
+      "type": "object"
+    },
+    "EditOperation": {
+      "enum": [
+        "KEEP",
+        "ADD",
+        "DELETE",
+        "RESHAPE"
+      ],
+      "title": "EditOperation",
+      "type": "string"
+    },
+    "EditRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "op": {
+          "$ref": "#/$defs/EditOperation"
+        },
+        "object_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Object Id"
+        },
+        "geometry": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GeoJSONGeometry"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "op"
+      ],
+      "title": "EditRecord",
+      "type": "object"
+    },
+    "EvidenceItem": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_id": {
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "timestamp": {
+          "title": "Timestamp",
+          "type": "string"
+        },
+        "region": {
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Region",
+          "type": "array"
+        },
+        "scale": {
+          "minimum": 1,
+          "title": "Scale",
+          "type": "integer"
+        },
+        "image_path": {
+          "title": "Image Path",
+          "type": "string"
+        },
+        "clear_fraction": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Clear Fraction",
+          "type": "number"
+        },
+        "cost": {
+          "exclusiveMinimum": 0.0,
+          "title": "Cost",
+          "type": "number"
+        },
+        "udm_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Udm Path"
+        }
+      },
+      "required": [
+        "evidence_id",
+        "timestamp",
+        "region",
+        "scale",
+        "image_path",
+        "clear_fraction",
+        "cost"
+      ],
+      "title": "EvidenceItem",
+      "type": "object"
+    },
+    "GeoJSONGeometry": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "title": "Type",
+          "type": "string"
+        },
+        "coordinates": {
+          "title": "Coordinates"
+        }
+      },
+      "required": [
+        "type",
+        "coordinates"
+      ],
+      "title": "GeoJSONGeometry",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "episode_id": {
+      "title": "Episode Id",
+      "type": "string"
+    },
+    "aoi_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Aoi Id"
+    },
+    "anchor_timestamp": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Anchor Timestamp"
+    },
+    "split": {
+      "title": "Split",
+      "type": "string"
+    },
+    "source_dataset": {
+      "title": "Source Dataset",
+      "type": "string"
+    },
+    "map_before": {
+      "title": "Map Before",
+      "type": "string"
+    },
+    "target_map": {
+      "title": "Target Map",
+      "type": "string"
+    },
+    "prior_geometry": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/GeoJSONGeometry"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "target_geometry": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/GeoJSONGeometry"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "hypothesis": {
+      "$ref": "#/$defs/CandidateHypothesis"
+    },
+    "evidence_catalog": {
+      "items": {
+        "$ref": "#/$defs/EvidenceItem"
+      },
+      "title": "Evidence Catalog",
+      "type": "array"
+    },
+    "gt_edit": {
+      "$ref": "#/$defs/EditRecord"
+    },
+    "is_synthetic": {
+      "title": "Is Synthetic",
+      "type": "boolean"
+    },
+    "derivation_version": {
+      "title": "Derivation Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "episode_id",
+    "split",
+    "source_dataset",
+    "map_before",
+    "target_map",
+    "hypothesis",
+    "evidence_catalog",
+    "gt_edit",
+    "is_synthetic",
+    "derivation_version"
+  ],
+  "title": "EpisodeRecord",
+  "type": "object"
+}

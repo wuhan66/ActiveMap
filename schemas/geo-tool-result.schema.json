@@ -1,0 +1,68 @@
+{
+  "$defs": {
+    "GeoToolName": {
+      "enum": [
+        "RASTER_CROP",
+        "IMAGE_QUALITY",
+        "SPECTRAL_INDEX",
+        "TEMPORAL_CHANGE",
+        "RASTER_SEGMENT",
+        "TERRAIN_ANALYSIS",
+        "VECTOR_INSPECT"
+      ],
+      "title": "GeoToolName",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "call_id": {
+      "title": "Call Id",
+      "type": "string"
+    },
+    "tool": {
+      "$ref": "#/$defs/GeoToolName"
+    },
+    "success": {
+      "title": "Success",
+      "type": "boolean"
+    },
+    "outputs": {
+      "additionalProperties": true,
+      "title": "Outputs",
+      "type": "object"
+    },
+    "artifacts": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Artifacts",
+      "type": "array"
+    },
+    "cost": {
+      "minimum": 0.0,
+      "title": "Cost",
+      "type": "number"
+    },
+    "error": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Error"
+    }
+  },
+  "required": [
+    "call_id",
+    "tool",
+    "success",
+    "cost"
+  ],
+  "title": "GeoToolResult",
+  "type": "object"
+}

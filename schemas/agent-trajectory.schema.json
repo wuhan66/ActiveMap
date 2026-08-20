@@ -1,0 +1,436 @@
+{
+  "$defs": {
+    "AgentAction": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "$ref": "#/$defs/AgentActionType"
+        },
+        "evidence_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Evidence Id"
+        },
+        "edit": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EditOperation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "tool_call": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GeoToolCall"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "action"
+      ],
+      "title": "AgentAction",
+      "type": "object"
+    },
+    "AgentActionType": {
+      "enum": [
+        "ACQUIRE",
+        "USE_TOOL",
+        "COMMIT",
+        "REJECT"
+      ],
+      "title": "AgentActionType",
+      "type": "string"
+    },
+    "AgentBelief": {
+      "additionalProperties": false,
+      "properties": {
+        "edit_probabilities": {
+          "items": {
+            "type": "number"
+          },
+          "title": "Edit Probabilities",
+          "type": "array"
+        },
+        "confidence": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "geometry_delta": {
+          "items": {
+            "type": "number"
+          },
+          "title": "Geometry Delta",
+          "type": "array"
+        },
+        "uncertainty": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Uncertainty",
+          "type": "number"
+        }
+      },
+      "required": [
+        "edit_probabilities",
+        "confidence",
+        "uncertainty"
+      ],
+      "title": "AgentBelief",
+      "type": "object"
+    },
+    "AgentCandidate": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_id": {
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "cost": {
+          "exclusiveMinimum": 0.0,
+          "title": "Cost",
+          "type": "number"
+        },
+        "selector_score": {
+          "title": "Selector Score",
+          "type": "number"
+        },
+        "features": {
+          "items": {
+            "type": "number"
+          },
+          "title": "Features",
+          "type": "array"
+        }
+      },
+      "required": [
+        "evidence_id",
+        "cost",
+        "selector_score",
+        "features"
+      ],
+      "title": "AgentCandidate",
+      "type": "object"
+    },
+    "AgentObservation": {
+      "additionalProperties": false,
+      "properties": {
+        "task_id": {
+          "title": "Task Id",
+          "type": "string"
+        },
+        "split": {
+          "title": "Split",
+          "type": "string"
+        },
+        "step": {
+          "minimum": 0,
+          "title": "Step",
+          "type": "integer"
+        },
+        "initial_budget": {
+          "minimum": 0.0,
+          "title": "Initial Budget",
+          "type": "number"
+        },
+        "remaining_budget": {
+          "minimum": 0.0,
+          "title": "Remaining Budget",
+          "type": "number"
+        },
+        "spent_cost": {
+          "minimum": 0.0,
+          "title": "Spent Cost",
+          "type": "number"
+        },
+        "selected_evidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Selected Evidence Ids",
+          "type": "array"
+        },
+        "belief": {
+          "$ref": "#/$defs/AgentBelief"
+        },
+        "candidates": {
+          "items": {
+            "$ref": "#/$defs/AgentCandidate"
+          },
+          "title": "Candidates",
+          "type": "array"
+        },
+        "terminal_score": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Terminal Score"
+        },
+        "available_tools": {
+          "items": {
+            "$ref": "#/$defs/GeoToolName"
+          },
+          "title": "Available Tools",
+          "type": "array"
+        },
+        "tool_history": {
+          "items": {
+            "$ref": "#/$defs/GeoToolResult"
+          },
+          "title": "Tool History",
+          "type": "array"
+        },
+        "terminal_actions": {
+          "items": {
+            "$ref": "#/$defs/AgentActionType"
+          },
+          "title": "Terminal Actions",
+          "type": "array"
+        }
+      },
+      "required": [
+        "task_id",
+        "split",
+        "step",
+        "initial_budget",
+        "remaining_budget",
+        "spent_cost",
+        "selected_evidence_ids",
+        "belief",
+        "candidates"
+      ],
+      "title": "AgentObservation",
+      "type": "object"
+    },
+    "AgentTransition": {
+      "additionalProperties": false,
+      "properties": {
+        "observation": {
+          "$ref": "#/$defs/AgentObservation"
+        },
+        "action": {
+          "$ref": "#/$defs/AgentAction"
+        },
+        "reward": {
+          "title": "Reward",
+          "type": "number"
+        },
+        "done": {
+          "title": "Done",
+          "type": "boolean"
+        },
+        "next_observation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AgentObservation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "oracle_action": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AgentAction"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "oracle_utilities": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Oracle Utilities",
+          "type": "object"
+        }
+      },
+      "required": [
+        "observation",
+        "action",
+        "reward",
+        "done"
+      ],
+      "title": "AgentTransition",
+      "type": "object"
+    },
+    "EditOperation": {
+      "enum": [
+        "KEEP",
+        "ADD",
+        "DELETE",
+        "RESHAPE"
+      ],
+      "title": "EditOperation",
+      "type": "string"
+    },
+    "GeoToolCall": {
+      "additionalProperties": false,
+      "properties": {
+        "call_id": {
+          "pattern": "^[A-Za-z0-9_.-]+$",
+          "title": "Call Id",
+          "type": "string"
+        },
+        "tool": {
+          "$ref": "#/$defs/GeoToolName"
+        },
+        "inputs": {
+          "additionalProperties": true,
+          "title": "Inputs",
+          "type": "object"
+        },
+        "parameters": {
+          "additionalProperties": true,
+          "title": "Parameters",
+          "type": "object"
+        }
+      },
+      "required": [
+        "call_id",
+        "tool",
+        "inputs"
+      ],
+      "title": "GeoToolCall",
+      "type": "object"
+    },
+    "GeoToolName": {
+      "enum": [
+        "RASTER_CROP",
+        "IMAGE_QUALITY",
+        "SPECTRAL_INDEX",
+        "TEMPORAL_CHANGE",
+        "RASTER_SEGMENT",
+        "TERRAIN_ANALYSIS",
+        "VECTOR_INSPECT"
+      ],
+      "title": "GeoToolName",
+      "type": "string"
+    },
+    "GeoToolResult": {
+      "additionalProperties": false,
+      "properties": {
+        "call_id": {
+          "title": "Call Id",
+          "type": "string"
+        },
+        "tool": {
+          "$ref": "#/$defs/GeoToolName"
+        },
+        "success": {
+          "title": "Success",
+          "type": "boolean"
+        },
+        "outputs": {
+          "additionalProperties": true,
+          "title": "Outputs",
+          "type": "object"
+        },
+        "artifacts": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Artifacts",
+          "type": "array"
+        },
+        "cost": {
+          "minimum": 0.0,
+          "title": "Cost",
+          "type": "number"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error"
+        }
+      },
+      "required": [
+        "call_id",
+        "tool",
+        "success",
+        "cost"
+      ],
+      "title": "GeoToolResult",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "trajectory_id": {
+      "title": "Trajectory Id",
+      "type": "string"
+    },
+    "task_id": {
+      "title": "Task Id",
+      "type": "string"
+    },
+    "split": {
+      "title": "Split",
+      "type": "string"
+    },
+    "budget": {
+      "exclusiveMinimum": 0.0,
+      "title": "Budget",
+      "type": "number"
+    },
+    "transitions": {
+      "items": {
+        "$ref": "#/$defs/AgentTransition"
+      },
+      "title": "Transitions",
+      "type": "array"
+    },
+    "total_reward": {
+      "title": "Total Reward",
+      "type": "number"
+    },
+    "metadata": {
+      "additionalProperties": true,
+      "title": "Metadata",
+      "type": "object"
+    }
+  },
+  "required": [
+    "trajectory_id",
+    "task_id",
+    "split",
+    "budget",
+    "transitions",
+    "total_reward"
+  ],
+  "title": "AgentTrajectory",
+  "type": "object"
+}

@@ -1,0 +1,151 @@
+{
+  "$defs": {
+    "Decision": {
+      "enum": [
+        "COMMIT",
+        "REJECT",
+        "REQUEST_MORE_EVIDENCE"
+      ],
+      "title": "Decision",
+      "type": "string"
+    },
+    "EditOperation": {
+      "enum": [
+        "KEEP",
+        "ADD",
+        "DELETE",
+        "RESHAPE"
+      ],
+      "title": "EditOperation",
+      "type": "string"
+    },
+    "EditRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "op": {
+          "$ref": "#/$defs/EditOperation"
+        },
+        "object_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Object Id"
+        },
+        "geometry": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GeoJSONGeometry"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "op"
+      ],
+      "title": "EditRecord",
+      "type": "object"
+    },
+    "GeoJSONGeometry": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "title": "Type",
+          "type": "string"
+        },
+        "coordinates": {
+          "title": "Coordinates"
+        }
+      },
+      "required": [
+        "type",
+        "coordinates"
+      ],
+      "title": "GeoJSONGeometry",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "episode_id": {
+      "title": "Episode Id",
+      "type": "string"
+    },
+    "decision": {
+      "$ref": "#/$defs/Decision"
+    },
+    "edit": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/EditRecord"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "confidence": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Confidence",
+      "type": "number"
+    },
+    "evidence_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Evidence Ids",
+      "type": "array"
+    },
+    "contradiction_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Contradiction Ids",
+      "type": "array"
+    },
+    "cost": {
+      "minimum": 0.0,
+      "title": "Cost",
+      "type": "number"
+    },
+    "topology_valid": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Topology Valid"
+    },
+    "provenance": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Provenance",
+      "type": "object"
+    }
+  },
+  "required": [
+    "episode_id",
+    "decision",
+    "confidence",
+    "cost",
+    "provenance"
+  ],
+  "title": "DecisionRecord",
+  "type": "object"
+}
