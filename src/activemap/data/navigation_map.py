@@ -21,10 +21,21 @@ class NavigationEvidence(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     evidence_id: str
-    modality: Literal["camera", "lidar", "occupancy_crop", "map_prediction", "raycast"]
+    modality: Literal[
+        "camera",
+        "lidar",
+        "occupancy_crop",
+        "map_prediction",
+        "raycast",
+        "visibility_mask",
+    ]
     path: str
     cost: float = Field(gt=0.0)
     timestamp: int = Field(ge=0)
+    pose: NavigationPose | None = None
+    footprint_radius_pixels: int | None = Field(default=None, ge=1)
+    rgb_path: str | None = None
+    depth_path: str | None = None
 
 
 class NavigationMapEpisode(BaseModel):
@@ -41,13 +52,15 @@ class NavigationMapEpisode(BaseModel):
     initial_map_path: str
     target_map_path: str
     start_pose: NavigationPose
+    initial_rgb_path: str | None = None
+    initial_depth_path: str | None = None
     evidence: list[NavigationEvidence]
     budget: float = Field(gt=0.0)
     test_assets_read: bool = False
     metadata: dict[str, str | int | float | bool] = Field(default_factory=dict)
 
     @model_validator(mode="after")
-    def validate_episode(self) -> "NavigationMapEpisode":
+    def validate_episode(self) -> NavigationMapEpisode:
         if not self.evidence:
             raise ValueError("navigation episode requires evidence candidates")
         ids = [row.evidence_id for row in self.evidence]
@@ -78,6 +91,17 @@ def validate_navigation_map_jsonl(
                         episode.target_map_path,
                         *(row.path for row in episode.evidence),
                     ]
+                    paths.extend(
+                        path
+                        for path in (episode.initial_rgb_path, episode.initial_depth_path)
+                        if path is not None
+                    )
+                    paths.extend(
+                        path
+                        for row in episode.evidence
+                        for path in (row.rgb_path, row.depth_path)
+                        if path is not None
+                    )
                     for raw_path in paths:
                         if not Path(raw_path).is_file():
                             raise FileNotFoundError(raw_path)

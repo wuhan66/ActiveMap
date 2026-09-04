@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from hashlib import sha256
 from typing import Any
 
 import numpy as np
@@ -11,6 +12,10 @@ from torch import Tensor
 from torch.nn import functional as F
 from torch.utils.data import Dataset
 
+from activemap.data.prior_input_corruption import (
+    deterministic_prior_translation,
+    morph_prior_no_wrap,
+)
 from activemap.models import EditOperation
 from activemap.updater_records import UpdaterSample
 
@@ -53,6 +58,123 @@ class UpdaterAugmentationConfig:
             if float(getattr(config, name)) < 0.0:
                 raise ValueError(f"augmentation.{name} must be non-negative")
         return config
+
+
+@dataclass(frozen=True)
+class CarriedPriorResidualConfig:
+    """Deterministic train/internal corruption for carried-map residual recovery."""
+
+    enabled: bool = False
+    probability: float = 0.0
+    max_translation_pixels: int = 0
+    morphology_pixels: int = 0
+    seed: int = 0
+
+    @classmethod
+    def from_dict(cls, payload: dict[str, Any] | None) -> CarriedPriorResidualConfig:
+        values = payload or {}
+        config = cls(
+            enabled=bool(values.get("enabled", False)),
+            probability=float(values.get("probability", 0.0)),
+            max_translation_pixels=int(values.get("max_translation_pixels", 0)),
+            morphology_pixels=int(values.get("morphology_pixels", 0)),
+            seed=int(values.get("seed", 0)),
+        )
+        if not 0.0 <= config.probability <= 1.0:
+            raise ValueError("carried_prior_residual.probability must be in [0, 1]")
+        if config.max_translation_pixels < 0:
+            raise ValueError(
+                "carried_prior_residual.max_translation_pixels must be non-negative"
+            )
+        if config.morphology_pixels < 0:
+            raise ValueError(
+                "carried_prior_residual.morphology_pixels must be non-negative"
+            )
+        if config.enabled and (
+            config.max_translation_pixels == 0 and config.morphology_pixels == 0
+        ):
+            raise ValueError(
+                "enabled carried_prior_residual requires translation or morphology corruption"
+            )
+        return config
+
+
+def _stable_fraction(*, identity: str, seed: int, namespace: str) -> float:
+    digest = sha256(f"{seed}:{namespace}:{identity}".encode()).digest()
+    return int.from_bytes(digest[:8], byteorder="big") / float(2**64)
+
+
+def _normalized_mask_bounds(mask: np.ndarray) -> np.ndarray:
+    if mask.ndim != 2:
+        raise ValueError("mask bounds require a 2D mask")
+    foreground = np.argwhere(mask >= 0.5)
+    if foreground.size == 0:
+        return np.zeros(4, dtype=np.float32)
+    height, width = mask.shape
+    y1, x1 = foreground.min(axis=0)
+    y2, x2 = foreground.max(axis=0) + 1
+    return np.array((x1 / width, y1 / height, x2 / width, y2 / height), dtype=np.float32)
+
+
+def _residual_operation(
+    prior: np.ndarray,
+    target: np.ndarray,
+    valid: np.ndarray,
+) -> EditOperation:
+    if prior.shape != target.shape or prior.shape != valid.shape:
+        raise ValueError("residual operation masks must share a shape")
+    prior_foreground = (prior >= 0.5) & (valid >= 0.5)
+    target_foreground = (target >= 0.5) & (valid >= 0.5)
+    adds = np.any(target_foreground & ~prior_foreground)
+    removes = np.any(prior_foreground & ~target_foreground)
+    if adds and removes:
+        return EditOperation.RESHAPE
+    if adds:
+        return EditOperation.ADD
+    if removes:
+        return EditOperation.DELETE
+    return EditOperation.KEEP
+
+
+def _residual_geometry_delta(prior: np.ndarray, target: np.ndarray) -> Tensor:
+    target_bounds = _normalized_mask_bounds(target)
+    prior_bounds = _normalized_mask_bounds(prior)
+    return torch.from_numpy(
+        np.concatenate((target_bounds, target_bounds - prior_bounds)).astype(np.float32)
+    )
+
+
+def _corrupt_carried_prior(
+    prior: np.ndarray,
+    *,
+    sample_id: str,
+    config: CarriedPriorResidualConfig,
+) -> tuple[np.ndarray, bool]:
+    """Apply deterministic no-wrap corruption and report whether the input changed."""
+
+    if not config.enabled or _stable_fraction(
+        identity=sample_id, seed=config.seed, namespace="apply"
+    ) >= config.probability:
+        return prior.copy(), False
+    corrupted, _ = deterministic_prior_translation(
+        prior,
+        identity=sample_id,
+        max_pixels=config.max_translation_pixels,
+        seed=config.seed,
+    )
+    if config.morphology_pixels > 0:
+        morphology = (
+            "dilate"
+            if _stable_fraction(identity=sample_id, seed=config.seed, namespace="morphology")
+            < 0.5
+            else "erode"
+        )
+        corrupted = morph_prior_no_wrap(
+            corrupted,
+            operation=morphology,
+            pixels=config.morphology_pixels,
+        )
+    return corrupted, bool(np.any(corrupted != prior))
 
 
 def _image_to_channels_first(array: np.ndarray) -> np.ndarray:
@@ -134,11 +256,15 @@ class UpdaterDataset(Dataset[dict[str, Tensor | str]]):
         self,
         samples: list[UpdaterSample],
         augmentation: UpdaterAugmentationConfig | None = None,
+        carried_prior_residual: CarriedPriorResidualConfig | None = None,
         input_size: int | None = None,
         temporal_pair_input: bool = False,
     ) -> None:
         self.samples = samples
         self.augmentation = augmentation or UpdaterAugmentationConfig()
+        self.carried_prior_residual = (
+            carried_prior_residual or CarriedPriorResidualConfig()
+        )
         if input_size is not None and input_size < 16:
             raise ValueError("input_size must be at least 16 pixels")
         self.input_size = input_size
@@ -178,6 +304,11 @@ class UpdaterDataset(Dataset[dict[str, Tensor | str]]):
         target_tensor = torch.from_numpy(target)
         valid_tensor = torch.from_numpy(valid)
         geometry_tensor = torch.tensor(sample.geometry_delta, dtype=torch.float32)
+        source_edit_target = torch.tensor(
+            EDIT_TO_INDEX[sample.edit_type], dtype=torch.long
+        )
+        edit_target = source_edit_target.clone()
+        carried_prior_residual_applied = torch.tensor(False)
         if self.input_size is not None and image_tensor.shape[-2:] != (
             self.input_size,
             self.input_size,
@@ -198,6 +329,26 @@ class UpdaterDataset(Dataset[dict[str, Tensor | str]]):
             valid_tensor = F.interpolate(
                 valid_tensor.unsqueeze(0), size=output_size, mode="nearest"
             ).squeeze(0)
+        canonical_prior = prior_tensor.squeeze(0).numpy()
+        corrupted_prior, was_corrupted = _corrupt_carried_prior(
+            canonical_prior,
+            sample_id=sample.sample_id,
+            config=self.carried_prior_residual,
+        )
+        if was_corrupted:
+            target_array = target_tensor.squeeze(0).numpy()
+            valid_array = valid_tensor.squeeze(0).numpy()
+            prior_tensor = torch.from_numpy(corrupted_prior[None, ...].astype(np.float32))
+            residual_operation = _residual_operation(
+                corrupted_prior,
+                target_array,
+                valid_array,
+            )
+            edit_target = torch.tensor(
+                EDIT_TO_INDEX[residual_operation], dtype=torch.long
+            )
+            geometry_tensor = _residual_geometry_delta(corrupted_prior, target_array)
+            carried_prior_residual_applied = torch.tensor(True)
         if self.augmentation.enabled:
             horizontal_flip = bool(
                 torch.rand(()) < self.augmentation.horizontal_flip_probability
@@ -259,6 +410,8 @@ class UpdaterDataset(Dataset[dict[str, Tensor | str]]):
             "prior_mask": prior_tensor,
             "target_mask": target_tensor,
             "valid_mask": valid_tensor,
-            "edit_target": torch.tensor(EDIT_TO_INDEX[sample.edit_type], dtype=torch.long),
+            "edit_target": edit_target,
+            "source_edit_target": source_edit_target,
+            "carried_prior_residual_applied": carried_prior_residual_applied,
             "geometry_target": geometry_tensor,
         }

@@ -38,6 +38,7 @@ from activemap.training.updater import (  # noqa: E402
     updater_config_from_payload,
 )
 from activemap.training.updater_data import (  # noqa: E402
+    CarriedPriorResidualConfig,
     UpdaterDataset,
     transform_geometry_delta,
 )
@@ -97,6 +98,43 @@ def test_updater_dataset_resizes_mixed_crop_shapes(tmp_path: Path) -> None:
     assert batch["image"].shape == (3, 32, 32)
     assert batch["prior_mask"].shape == (1, 32, 32)
     assert batch["dataset_name"] == "spacenet7"
+
+
+def test_carried_prior_residual_turns_keep_into_deterministic_edit_supervision(
+    tmp_path: Path,
+) -> None:
+    image = np.zeros((3, 16, 16), dtype=np.float32)
+    canonical_prior = np.zeros((1, 16, 16), dtype=np.float32)
+    canonical_prior[:, 4:12, 4:12] = 1.0
+    np.save(tmp_path / "image.npy", image)
+    np.save(tmp_path / "mask.npy", canonical_prior)
+    sample = UpdaterSample(
+        sample_id="carried-prior-keep",
+        split="train",
+        image_path=str(tmp_path / "image.npy"),
+        prior_mask_path=str(tmp_path / "mask.npy"),
+        target_mask_path=str(tmp_path / "mask.npy"),
+        edit_type=EditOperation.KEEP,
+        geometry_delta=[0.0] * 8,
+        dataset_name="spacenet7",
+    )
+    config = CarriedPriorResidualConfig(
+        enabled=True,
+        probability=1.0,
+        max_translation_pixels=0,
+        morphology_pixels=1,
+        seed=17,
+    )
+    dataset = UpdaterDataset([sample], carried_prior_residual=config)
+    first = dataset[0]
+    second = dataset[0]
+
+    assert torch.equal(first["prior_mask"], second["prior_mask"])
+    assert not torch.equal(first["prior_mask"], torch.from_numpy(canonical_prior))
+    assert first["source_edit_target"].item() == 0
+    assert first["edit_target"].item() in {1, 2}
+    assert first["carried_prior_residual_applied"].item() is True
+    assert not torch.equal(first["geometry_target"], torch.zeros(8))
 
 
 def test_temporal_pair_dataset_concatenates_old_then_current_rgb(tmp_path: Path) -> None:

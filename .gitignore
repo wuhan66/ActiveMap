@@ -38,6 +38,11 @@ runs/
 artifacts/
 reports/generated/
 logs/
+cluster_progress/
+experiment_records/
+datasets/
+external/
+third_party/
 wandb/
 mlruns/
 lightning_logs/
@@ -55,6 +60,14 @@ lightning_logs/
 *.geojsonl
 *.h5
 *.hdf5
+*.tar.gz
+*.tar
+*.zip
+
+# Internal experiment and cluster configurations
+configs/**/*_server.yaml
+configs/**/*_hdpi.yaml
+configs/**/*_nts.yaml
 
 # Submission, private operations, and generated release artifacts
 releases/

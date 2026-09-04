@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-TARGET_ROOT="${1:-/mnt/mydisk/wh/ActiveMap/datasets/muno21}"
+TARGET_ROOT="${1:-data/raw/muno21}"
 EXTRACT="${2:-true}"
 URL="https://favyen.com/files/muno21.zip"
 ARCHIVE="$TARGET_ROOT/muno21.zip"

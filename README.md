@@ -57,24 +57,31 @@ splits, typed-edit construction, candidate-evidence scope, and writeback
 evaluation. [docs/metrics.md](docs/metrics.md) defines final-map quality,
 false/missed edits, cost, and paired comparison metrics.
 
+## Implementation Scope
+
+The repository includes the complete reusable ActiveMap package and curated
+reproduction pipelines for temporal satellite maps, structured HD maps, and
+RGB-D navigation maps. The primary paper experiments remain the temporal
+building-map and road-map protocols; the other pipelines expose the same typed
+proposal, verification, and writeback interfaces without bundling restricted
+data or checkpoints. See [docs/IMPLEMENTATION_MAP.md](docs/IMPLEMENTATION_MAP.md)
+for the module and script map.
+
 ## Verification
 
 ~~~bash
-python -m pytest -q \
-  tests/test_cli.py \
-  tests/test_counterfactual_builder.py \
-  tests/test_episode_utility.py \
-  tests/test_geometry_edits.py \
-  tests/test_safe_commit.py \
-  tests/test_rollout.py \
-  tests/test_vector_map.py \
-  tests/test_schema_export.py \
-  tests/test_qc_split_safety.py
+python -m pytest -q
+bash scripts/run_smoke.sh
 ~~~
 
 Detailed reproducibility and release boundaries are in
 [REPRODUCIBILITY.md](REPRODUCIBILITY.md) and
-[MODEL_DATA_AVAILABILITY.md](MODEL_DATA_AVAILABILITY.md).
+[MODEL_DATA_AVAILABILITY.md](MODEL_DATA_AVAILABILITY.md). The complete test
+suite and synthetic smoke workflow match the repository CI verification path.
+
+The repository CI runs the complete unit-test suite plus the synthetic smoke
+workflow on a CPU-only Linux environment. It does not download third-party
+imagery, checkpoints, or sealed benchmark artifacts.
 
 ## Release Status
 

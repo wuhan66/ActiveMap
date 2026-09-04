@@ -17,7 +17,8 @@ region-time-scale 主动取证提供离线 episode。
 - 本机压缩包：`SN7_buildings_train.tar.gz`；
 - 大小：`9161814623` bytes；
 - SHA-256：`00a4c862a78da923100c59679db0917b60defbeb7d16ab44a65798b645a775bf`；
-- 实际 raw root：`/mnt/mydisk/wh/ActiveMap/datasets/sn7/train/train`；
+- 原始数据根目录由使用者在下载/预处理命令中显式指定；本仓库不记录
+  开发或训练机器的绝对路径；
 - 索引：1423 个时相，60 个 AOI；优先使用 `images_masked`、`labels_match` 和可用 UDM。
 
 SpaceNet 7 原始影像与官方 label 不随本仓库分发。公开任何派生数据前必须单独完成上游许可审计；

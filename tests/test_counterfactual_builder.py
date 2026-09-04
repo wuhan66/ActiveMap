@@ -17,7 +17,10 @@ from activemap.models import (  # noqa: E402
 )
 from activemap.nn.updater import PriorConditionedUNet, UpdaterConfig  # noqa: E402
 from activemap.oracle.updater_counterfactual import (  # noqa: E402
+    MASK_FEATURE_NAMES,
+    MASK_FEATURES_SCHEMA,
     _expand_budget_states,
+    _target_free_mask_features,
     build_selector_oracle_input_cache,
     build_selector_oracle_samples,
     remap_episode_assets,
@@ -39,6 +42,37 @@ def _box(minimum: float, maximum: float) -> GeoJSONGeometry:
             ]
         ],
     )
+
+
+def test_target_free_mask_features_respect_valid_support() -> None:
+    probability = np.asarray(
+        [[0.9, 0.8, 0.1], [0.2, 0.9, 1.0]], dtype=np.float32
+    )
+    prior = np.asarray([[1, 0, 0], [0, 1, 0]], dtype=np.float32)
+    valid = np.asarray([[1, 1, 1], [1, 1, 0]], dtype=np.float32)
+
+    features = _target_free_mask_features(probability, prior, valid)
+
+    assert len(features) == len(MASK_FEATURE_NAMES) == 10
+    assert features[:6] == pytest.approx([0.6, 0.4, 2 / 3, 0.2, 0.0, 0.2])
+    assert features[6] == pytest.approx(0.26)
+    assert features[7] == pytest.approx(0.472)
+    assert np.isfinite(features).all()
+
+    changed_only_outside_valid = probability.copy()
+    changed_only_outside_valid[1, 2] = 0.0
+    assert _target_free_mask_features(
+        changed_only_outside_valid, prior, valid
+    ) == pytest.approx(features)
+
+
+def test_target_free_mask_features_reject_cross_grid_inputs() -> None:
+    with pytest.raises(ValueError, match="candidate-local raster grid"):
+        _target_free_mask_features(
+            np.zeros((2, 2), dtype=np.float32),
+            np.zeros((3, 3), dtype=np.float32),
+            np.ones((2, 2), dtype=np.float32),
+        )
 
 
 def test_test_selector_oracle_requires_explicit_frozen_authorization(
@@ -138,6 +172,21 @@ def test_updater_counterfactual_builds_budget_states(tmp_path: Path) -> None:
     assert len(samples) >= 2
     assert {sample.metadata["budget"] for sample in samples} == {2.0, 3.0}
     assert all(sample.evidence_features[0][-1] > 0 for sample in samples)
+    assert all(
+        sample.metadata["mask_feature_contract"]
+        == {
+            "schema_version": MASK_FEATURES_SCHEMA,
+            "feature_names": list(MASK_FEATURE_NAMES),
+            "target_free": True,
+            "scope": "candidate_local_grid",
+        }
+        for sample in samples
+    )
+    assert all(
+        len(prediction["mask_features"]) == len(MASK_FEATURE_NAMES)
+        for sample in samples
+        for prediction in sample.metadata["evidence_predictions"].values()
+    )
 
 
 def test_executable_budget_utility_is_incremental_and_budget_normalized() -> None:

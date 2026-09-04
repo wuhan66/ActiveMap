@@ -55,6 +55,19 @@ from activemap.training.selector import resolve_device
 
 EDIT_ORDER = list(EditOperation)
 ORACLE_INPUT_CACHE_SCHEMA = "activemap-oracle-input-cache-v1"
+MASK_FEATURES_SCHEMA = "target-free-mask-features-v2"
+MASK_FEATURE_NAMES = (
+    "predicted_foreground_fraction",
+    "prior_foreground_fraction",
+    "prediction_prior_iou",
+    "added_fraction",
+    "removed_fraction",
+    "changed_fraction",
+    "mean_absolute_probability_delta",
+    "mean_predictive_uncertainty",
+    "prediction_boundary_density",
+    "change_boundary_density",
+)
 
 
 def _require_h5py() -> Any:
@@ -626,6 +639,65 @@ def _iou(prediction: np.ndarray, target: np.ndarray, valid: np.ndarray) -> float
     return float(intersection / union) if union else 1.0
 
 
+def _target_free_mask_features(
+    probability: np.ndarray,
+    prior: np.ndarray,
+    valid: np.ndarray,
+) -> list[float]:
+    """Summarize one candidate's prediction on its own raster grid."""
+    probability_array = np.asarray(probability, dtype=np.float32)
+    prior_array = np.asarray(prior, dtype=np.float32)
+    valid_array = np.asarray(valid, dtype=np.float32)
+    if probability_array.ndim != 2:
+        raise ValueError("mask feature inputs must be two-dimensional")
+    if prior_array.shape != probability_array.shape or valid_array.shape != probability_array.shape:
+        raise ValueError("mask feature inputs must share one candidate-local raster grid")
+
+    valid_mask = valid_array >= 0.5
+    valid_count = int(valid_mask.sum())
+    if valid_count == 0:
+        return [0.0] * len(MASK_FEATURE_NAMES)
+
+    clipped_probability = np.clip(probability_array, 0.0, 1.0)
+    prediction_mask = clipped_probability >= 0.5
+    prior_mask = prior_array >= 0.5
+    added = prediction_mask & ~prior_mask & valid_mask
+    removed = prior_mask & ~prediction_mask & valid_mask
+    changed = (prediction_mask ^ prior_mask) & valid_mask
+    intersection = prediction_mask & prior_mask & valid_mask
+    union = (prediction_mask | prior_mask) & valid_mask
+
+    def fraction(mask: np.ndarray) -> float:
+        return float(np.sum(mask & valid_mask) / valid_count)
+
+    def boundary_density(mask: np.ndarray) -> float:
+        horizontal_valid = valid_mask[:, 1:] & valid_mask[:, :-1]
+        vertical_valid = valid_mask[1:, :] & valid_mask[:-1, :]
+        denominator = int(horizontal_valid.sum() + vertical_valid.sum())
+        if denominator == 0:
+            return 0.0
+        transitions = int(
+            np.sum((mask[:, 1:] != mask[:, :-1]) & horizontal_valid)
+            + np.sum((mask[1:, :] != mask[:-1, :]) & vertical_valid)
+        )
+        return float(transitions / denominator)
+
+    probability_delta = np.abs(clipped_probability - prior_mask.astype(np.float32))
+    uncertainty = 4.0 * clipped_probability * (1.0 - clipped_probability)
+    return [
+        fraction(prediction_mask),
+        fraction(prior_mask),
+        float(intersection.sum() / union.sum()) if np.any(union) else 1.0,
+        fraction(added),
+        fraction(removed),
+        fraction(changed),
+        float(np.mean(probability_delta[valid_mask])),
+        float(np.mean(uncertainty[valid_mask])),
+        boundary_density(prediction_mask),
+        boundary_density(changed),
+    ]
+
+
 def _evidence_features(
     item: EvidenceItem,
     *,
@@ -967,8 +1039,17 @@ def _base_selector_sample(
                     "gated_edit": EDIT_ORDER[int(predicted_indices[index])].value,
                     "confidence": float(confidence[index]),
                     "geometry_delta": geometry_deltas[index].tolist(),
+                    "mask_features": _target_free_mask_features(
+                        segmentation[index], prior_array[index], valid_array[index]
+                    ),
                 }
                 for index, item in enumerate(episode.evidence_catalog)
+            },
+            "mask_feature_contract": {
+                "schema_version": MASK_FEATURES_SCHEMA,
+                "feature_names": list(MASK_FEATURE_NAMES),
+                "target_free": True,
+                "scope": "candidate_local_grid",
             },
         },
     )

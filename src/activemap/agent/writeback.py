@@ -274,6 +274,16 @@ def evaluate_typed_writeback(
         if confidence_gate_passed
         else prior_mask.astype(bool)
     )
+    raw_committed = np.asarray(committed, dtype=bool)
+    raw_effective_operation = effective_operation_from_masks(
+        prior_mask, raw_committed, visible
+    )
+    raw_added_pixels = int(
+        np.sum(raw_committed & (prior_mask < 0.5) & visible)
+    )
+    raw_removed_pixels = int(
+        np.sum((~raw_committed) & (prior_mask >= 0.5) & visible)
+    )
     committed, delta_components = regularize_typed_delta(
         committed,
         prior_mask,
@@ -327,8 +337,16 @@ def evaluate_typed_writeback(
     )
     result = {
         "operation": operation.value,
+        "raw_effective_operation": raw_effective_operation.value,
+        "raw_writeback_changed": raw_effective_operation != EditOperation.KEEP,
+        "raw_added_pixels": raw_added_pixels,
+        "raw_removed_pixels": raw_removed_pixels,
         "effective_operation": effective_operation.value,
         "writeback_changed": effective_operation != EditOperation.KEEP,
+        "regularization_removed_all_delta": bool(
+            raw_effective_operation != EditOperation.KEEP
+            and effective_operation == EditOperation.KEEP
+        ),
         "selected_evidence_ids": [item.evidence_id for item in predictions],
         "fusion_weights": weights,
         "evidence_fusion": evidence_fusion,

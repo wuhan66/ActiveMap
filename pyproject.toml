@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Edit-conditioned evidence acquisition for budgeted vector map updating"
 readme = "README.md"
 requires-python = ">=3.10,<3.13"
-license = {text = "Research-only until third-party license audit is complete"}
+license = {text = "Private pre-release; no public license until third-party license audit is complete"}
 authors = [{name = "ActiveMap Research Team"}]
 dependencies = [
   "numpy>=1.26,<3",
@@ -34,6 +34,7 @@ dependencies = [
 ml = [
   "torch>=2.4,<3",
   "torchvision>=0.19,<1",
+  "tensorboard>=2.17,<3",
 ]
 graph-eval = [
   "scikit-image>=0.22,<1",

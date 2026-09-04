@@ -6,7 +6,7 @@ import yaml
 
 torch = pytest.importorskip("torch")
 
-from activemap.features import AblationSpec, EVIDENCE_DIM  # noqa: E402
+from activemap.features import EVIDENCE_DIM, AblationSpec  # noqa: E402
 from activemap.nn.selector import EvidenceSelector, SelectorConfig  # noqa: E402
 from activemap.synthetic import (  # noqa: E402
     generate_selector_smoke_samples,
@@ -20,8 +20,8 @@ from activemap.training.selector import (  # noqa: E402
     select_stop_margin,
     selector_loss_components,
     split_fit_calibration_samples,
-    two_stage_selector_loss_components,
     train_selector,
+    two_stage_selector_loss_components,
 )
 
 
@@ -253,6 +253,42 @@ def test_two_stage_stop_delta_regression_uses_stop_as_zero_point() -> None:
         utility_regression_target="stop_delta",
     )
     assert absolute["utility_regression"] != stop_delta["utility_regression"]
+
+
+def test_two_stage_candidate_positive_weights_affect_value_losses() -> None:
+    evidence_logits = torch.tensor([[0.0, 0.0]], requires_grad=True)
+    value_predictions = torch.tensor([[0.0, 0.0]], requires_grad=True)
+    gate_logits = torch.tensor([0.0], requires_grad=True)
+    utilities = torch.tensor([[0.8, -0.2, 0.0]])
+    targets = utilities.argmax(dim=-1)
+    shared = {
+        "regret_weight": 0.0,
+        "listwise_weight": 0.0,
+        "utility_temperature": 0.25,
+        "acquire_weight": 1.0,
+        "imitation_weight": 0.0,
+        "utility_regression_weight": 1.0,
+        "utility_scale": 1.0,
+        "gate_utility_weight": 0.0,
+        "candidate_value_predictions": value_predictions,
+        "candidate_value_sign_weight": 1.0,
+        "context_gate_loss_weight": 0.0,
+        "utility_regression_target": "stop_delta",
+    }
+    _, unweighted = two_stage_selector_loss_components(
+        evidence_logits, gate_logits, utilities, targets, **shared
+    )
+    _, weighted = two_stage_selector_loss_components(
+        evidence_logits,
+        gate_logits,
+        utilities,
+        targets,
+        **shared,
+        candidate_value_positive_weight=8.0,
+        candidate_utility_positive_weight=8.0,
+    )
+    assert weighted["candidate_value_sign"] > unweighted["candidate_value_sign"]
+    assert weighted["utility_regression"] > unweighted["utility_regression"]
 
 
 def test_selector_training_writes_reproducible_artifacts(tmp_path: Path) -> None:

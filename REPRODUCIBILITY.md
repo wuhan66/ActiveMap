@@ -29,8 +29,10 @@ expects `TORCH_INDEX_URL` only when PyTorch is absent.
 
 1. Run `bash scripts/run_smoke.sh` to generate synthetic selector and updater
    samples, train small models, evaluate them, and write rollout traces.
-2. Run the curated unit tests listed in `README.md` to verify geometry edits,
-   vector writeback, Safe Commit, counterfactual values, schemas, and splits.
+2. Run the complete unit-test suite with `python -m pytest -q` to verify
+   geometry edits, vector writeback, Safe Commit, counterfactual values,
+   schemas, models, and split safety. Repository CI runs this suite followed
+   by the synthetic smoke workflow on CPU-only Linux.
 3. Acquire external raw data under the original providers' terms and follow
    `docs/dataset_protocol.md`. Build geographic/task-disjoint manifests before
    extracting crops or candidate evidence.

@@ -13,7 +13,6 @@ from rich.table import Table
 
 from activemap.data.audit import audit_manifest as run_manifest_audit
 from activemap.data.manifest import read_manifest, write_manifest
-from activemap.data.sn7 import build_sn7_manifest
 from activemap.data.splits import assign_group_splits, write_split_files
 from activemap.validation import validate_jsonl as run_jsonl_validation
 
@@ -31,6 +30,8 @@ def index_sn7(
     strict: Annotated[bool, typer.Option(help="Fail on unparseable or unreadable assets.")] = True,
 ) -> None:
     """Index monthly SpaceNet 7 images, labels, and UDM masks."""
+    from activemap.data.sn7 import build_sn7_manifest
+
     frame = build_sn7_manifest(raw_root, read_raster_metadata=metadata, strict=strict)
     write_manifest(frame, output)
     message = f"Wrote {len(frame)} rows across {frame['aoi_id'].nunique()} AOIs to {output}"
@@ -128,6 +129,160 @@ def scaffold_external_dataset_command(
 
     plan = build_external_dataset_scaffold(registry, dataset_id, output_root)
     console.print_json(data=plan)
+
+
+@app.command("build-mapex-kth-episodes")
+def build_mapex_kth_episodes_command(
+    source_root: Annotated[Path, typer.Argument(exists=True, file_okay=False)],
+    output_root: Annotated[Path, typer.Argument()],
+    candidate_count: Annotated[int, typer.Option(min=1)] = 8,
+    observation_radius: Annotated[int, typer.Option(min=1)] = 96,
+    pixels_per_meter: Annotated[float, typer.Option(min=0.001)] = 10.0,
+    budget: Annotated[float, typer.Option(min=0.001)] = 250.0,
+    sensor_error_rate: Annotated[float, typer.Option(min=0.0, max=0.999)] = 0.0,
+    val_fraction: Annotated[float, typer.Option(min=0.001, max=0.999)] = 0.2,
+    seed: Annotated[int, typer.Option()] = 20260829,
+    max_maps: Annotated[int | None, typer.Option(min=1)] = None,
+) -> None:
+    """Build train/validation-only MapEx KTH local-observation pilot episodes."""
+    from activemap.data.mapex_kth import build_mapex_kth_navigation_episodes
+
+    summary = build_mapex_kth_navigation_episodes(
+        source_root,
+        output_root,
+        candidate_count=candidate_count,
+        observation_radius=observation_radius,
+        pixels_per_meter=pixels_per_meter,
+        budget=budget,
+        sensor_error_rate=sensor_error_rate,
+        val_fraction=val_fraction,
+        seed=seed,
+        max_maps=max_maps,
+    )
+    console.print_json(data=summary)
+
+
+@app.command("validate-navigation-map-index")
+def validate_navigation_map_index_command(
+    index: Annotated[Path, typer.Argument(exists=True, dir_okay=False)],
+    allow_test: Annotated[bool, typer.Option()] = False,
+    check_paths: Annotated[bool, typer.Option()] = False,
+) -> None:
+    """Validate an indoor/outdoor navigation-map episode index."""
+    from activemap.data.navigation_map import validate_navigation_map_jsonl
+
+    count, errors = validate_navigation_map_jsonl(
+        index,
+        allow_test=allow_test,
+        check_paths=check_paths,
+    )
+    if errors:
+        for error in errors:
+            console.print(f"[red]{error}[/red]")
+        raise typer.Exit(code=1)
+    console.print(f"[green]Validated {count} navigation-map episodes[/green]")
+
+
+@app.command("rollout-navigation")
+def rollout_navigation_command(
+    index: Annotated[Path, typer.Argument(exists=True, dir_okay=False)],
+    output_dir: Annotated[Path, typer.Argument()],
+    split: Annotated[str, typer.Option()] = "val",
+    policies: Annotated[str, typer.Option()] = (
+        "stop,nearest,cheapest,frontier_nearest,unknown_coverage,unknown_per_cost"
+    ),
+    max_steps: Annotated[int | None, typer.Option(min=1)] = None,
+    budget_override: Annotated[float | None, typer.Option(min=0.001)] = None,
+    commit_rule: Annotated[str, typer.Option()] = "always",
+    max_conflict_rate: Annotated[float, typer.Option(min=0.0, max=1.0)] = 0.02,
+    allow_test: Annotated[bool, typer.Option()] = False,
+) -> None:
+    """Run persistent occupancy-map controls with post-acquisition observations."""
+    from activemap.evaluation.navigation_rollout import (
+        COMMIT_RULES,
+        evaluate_navigation_rollouts,
+        load_navigation_episodes,
+        write_navigation_rollout_results,
+    )
+
+    if split not in {"train", "val", "test"}:
+        raise typer.BadParameter("split must be train, val, or test")
+    policy_names = tuple(name.strip() for name in policies.split(",") if name.strip())
+    if commit_rule not in COMMIT_RULES:
+        raise typer.BadParameter(f"commit_rule must be one of {sorted(COMMIT_RULES)}")
+    selected_commit_rule = COMMIT_RULES[commit_rule]
+    if commit_rule == "consistency":
+        from functools import partial
+
+        selected_commit_rule = partial(selected_commit_rule, max_conflict_rate=max_conflict_rate)
+    episodes = load_navigation_episodes(index, split=split, allow_test=allow_test)
+    summaries, results = evaluate_navigation_rollouts(
+        episodes,
+        policy_names=policy_names,
+        max_steps=max_steps,
+        commit_rule=selected_commit_rule,
+        budget_override=budget_override,
+    )
+    write_navigation_rollout_results(
+        output_dir,
+        summaries=summaries,
+        results=results,
+        index_path=index,
+        split=split,
+        max_steps=max_steps,
+        budget_override=budget_override,
+        commit_rule_name=(
+            f"consistency(max_conflict_rate={max_conflict_rate})"
+            if commit_rule == "consistency"
+            else commit_rule
+        ),
+    )
+    console.print(f"[green]Wrote persistent navigation rollouts to {output_dir}[/green]")
+
+
+@app.command("render-navigation-rollout")
+def render_navigation_rollout_command(
+    index: Annotated[Path, typer.Argument(exists=True, dir_okay=False)],
+    trace_specs: Annotated[
+        list[str],
+        typer.Option(help="LABEL:POLICY=TRACE_JSONL; repeat for each policy panel."),
+    ],
+    output: Annotated[Path, typer.Argument()],
+    episode_id: Annotated[str, typer.Option()],
+    split: Annotated[str, typer.Option()] = "val",
+) -> None:
+    """Render committed occupancy maps from one or more completed rollout traces."""
+    from activemap.evaluation.navigation_rollout import load_navigation_episodes
+    from activemap.evaluation.navigation_visualization import (
+        load_navigation_rollout_results,
+        render_navigation_comparison,
+    )
+
+    episodes = {row.episode_id: row for row in load_navigation_episodes(index, split=split)}
+    if episode_id not in episodes:
+        raise typer.BadParameter(f"unknown episode_id: {episode_id}")
+    labeled_results = []
+    for specification in trace_specs:
+        if "=" not in specification:
+            raise typer.BadParameter("trace_specs must use LABEL=TRACE_JSONL")
+        label_with_policy, raw_path = specification.split("=", 1)
+        if ":" not in label_with_policy:
+            raise typer.BadParameter("trace_specs must use LABEL:POLICY=TRACE_JSONL")
+        label, policy = label_with_policy.rsplit(":", 1)
+        matches = [
+            row
+            for row in load_navigation_rollout_results(Path(raw_path))
+            if row.episode_id == episode_id and row.policy == policy
+        ]
+        if len(matches) != 1:
+            raise typer.BadParameter(f"expected exactly one {episode_id} trace in {raw_path}")
+        labeled_results.append((label, matches[0]))
+    render_navigation_comparison(
+        episodes[episode_id],
+        labeled_results=labeled_results,
+        output_path=output,
+    )
+    console.print(f"[green]Wrote navigation comparison to {output}[/green]")
 
 
 @app.command("validate-external-predictions")

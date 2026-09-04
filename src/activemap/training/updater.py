@@ -26,6 +26,7 @@ from activemap.training.provenance import archive_updater_run, write_updater_pro
 from activemap.training.selector import resolve_device, set_global_seed
 from activemap.training.updater_data import (
     EDIT_TO_INDEX,
+    CarriedPriorResidualConfig,
     UpdaterAugmentationConfig,
     UpdaterDataset,
 )
@@ -616,6 +617,9 @@ def train_updater(config_path: Path, *, output_override: Path | None = None) -> 
     if not isinstance(edit_sampling_payload, dict):
         raise ValueError("data.edit_sampling_weights must be a mapping")
     augmentation = UpdaterAugmentationConfig.from_dict(training.get("augmentation"))
+    carried_prior_residual = CarriedPriorResidualConfig.from_dict(
+        data_settings.get("carried_prior_residual")
+    )
     weights = _training_sample_weights(
         train_samples,
         dataset_balance_power=balance_power,
@@ -634,6 +638,7 @@ def train_updater(config_path: Path, *, output_override: Path | None = None) -> 
         UpdaterDataset(
             train_samples,
             augmentation=augmentation,
+            carried_prior_residual=carried_prior_residual,
             input_size=input_size,
             temporal_pair_input=model_config.temporal_pair_input,
         ),
@@ -646,6 +651,7 @@ def train_updater(config_path: Path, *, output_override: Path | None = None) -> 
     val_loader = DataLoader(
         UpdaterDataset(
             val_samples,
+            carried_prior_residual=carried_prior_residual,
             input_size=input_size,
             temporal_pair_input=model_config.temporal_pair_input,
         ),

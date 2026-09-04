@@ -244,6 +244,8 @@ def two_stage_selector_loss_components(
     utility_regression_target: str = "absolute",
     candidate_value_predictions: Tensor | None = None,
     candidate_value_sign_weight: float = 0.0,
+    candidate_value_positive_weight: float = 1.0,
+    candidate_utility_positive_weight: float = 1.0,
     context_gate_loss_weight: float = 1.0,
 ) -> tuple[Tensor, dict[str, Tensor]]:
     """Train terminal gating separately from ranking among useful candidates."""
@@ -254,6 +256,8 @@ def two_stage_selector_loss_components(
         raise ValueError(
             "candidate value and context gate loss weights must be non-negative"
         )
+    if candidate_value_positive_weight <= 0 or candidate_utility_positive_weight <= 0:
+        raise ValueError("candidate positive weights must be positive")
 
     stop_index = utilities.shape[1] - 1
     candidate_utilities = utilities[:, :-1]
@@ -318,14 +322,33 @@ def two_stage_selector_loss_components(
         if candidate_value_predictions is not None
         else evidence_logits
     )
-    utility_regression = nn.functional.smooth_l1_loss(
-        value_predictions[finite], regression_targets[finite] * utility_scale
-    )
     sign_targets = (candidate_utilities > utilities[:, -1, None]).to(
         value_predictions.dtype
     )
+    regression_weights = torch.where(
+        sign_targets[finite] > 0,
+        torch.full_like(sign_targets[finite], candidate_utility_positive_weight),
+        torch.ones_like(sign_targets[finite]),
+    )
+    regression_weights = regression_weights / regression_weights.mean().clamp_min(
+        1e-12
+    )
+    utility_regression = (
+        nn.functional.smooth_l1_loss(
+            value_predictions[finite],
+            regression_targets[finite] * utility_scale,
+            reduction="none",
+        )
+        * regression_weights
+    ).mean()
     candidate_value_sign = nn.functional.binary_cross_entropy_with_logits(
-        value_predictions[finite], sign_targets[finite]
+        value_predictions[finite],
+        sign_targets[finite],
+        pos_weight=torch.as_tensor(
+            candidate_value_positive_weight,
+            dtype=value_predictions.dtype,
+            device=value_predictions.device,
+        ),
     )
     total = (
         context_gate_loss_weight * (gate_bce + gate_utility_weight * gate_utility)
@@ -362,6 +385,8 @@ def run_epoch(
     gate_utility_weight: float,
     utility_regression_target: str,
     candidate_value_sign_weight: float,
+    candidate_value_positive_weight: float,
+    candidate_utility_positive_weight: float,
     context_gate_loss_weight: float,
     optimizer: torch.optim.Optimizer | None,
     grad_clip: float,
@@ -432,6 +457,8 @@ def run_epoch(
                 utility_regression_target=utility_regression_target,
                 candidate_value_predictions=candidate_value_predictions,
                 candidate_value_sign_weight=candidate_value_sign_weight,
+                candidate_value_positive_weight=candidate_value_positive_weight,
+                candidate_utility_positive_weight=candidate_utility_positive_weight,
                 context_gate_loss_weight=context_gate_loss_weight,
             )
         else:
@@ -894,6 +921,12 @@ def train_selector(
     candidate_value_sign_weight = float(
         training_payload.get("candidate_value_sign_weight", 0.0)
     )
+    candidate_value_positive_weight = float(
+        training_payload.get("candidate_value_positive_weight", 1.0)
+    )
+    candidate_utility_positive_weight = float(
+        training_payload.get("candidate_utility_positive_weight", 1.0)
+    )
     context_gate_loss_weight = float(
         training_payload.get("context_gate_loss_weight", 1.0)
     )
@@ -901,6 +934,8 @@ def train_selector(
         raise ValueError(
             "candidate value and context gate loss weights must be non-negative"
         )
+    if candidate_value_positive_weight <= 0 or candidate_utility_positive_weight <= 0:
+        raise ValueError("candidate positive weights must be positive")
     utility_regression_target = str(
         training_payload.get("utility_regression_target", "absolute")
     )
@@ -1007,6 +1042,8 @@ def train_selector(
             gate_utility_weight=gate_utility_weight,
             utility_regression_target=utility_regression_target,
             candidate_value_sign_weight=candidate_value_sign_weight,
+            candidate_value_positive_weight=candidate_value_positive_weight,
+            candidate_utility_positive_weight=candidate_utility_positive_weight,
             context_gate_loss_weight=context_gate_loss_weight,
             optimizer=optimizer,
             grad_clip=grad_clip,
@@ -1043,6 +1080,8 @@ def train_selector(
                 gate_utility_weight=gate_utility_weight,
                 utility_regression_target=utility_regression_target,
                 candidate_value_sign_weight=candidate_value_sign_weight,
+                candidate_value_positive_weight=candidate_value_positive_weight,
+                candidate_utility_positive_weight=candidate_utility_positive_weight,
                 context_gate_loss_weight=context_gate_loss_weight,
                 optimizer=None,
                 grad_clip=grad_clip,
@@ -1188,6 +1227,8 @@ def train_selector(
         "utility_scale": utility_scale,
         "gate_utility_weight": gate_utility_weight,
         "candidate_value_sign_weight": candidate_value_sign_weight,
+        "candidate_value_positive_weight": candidate_value_positive_weight,
+        "candidate_utility_positive_weight": candidate_utility_positive_weight,
         "context_gate_loss_weight": context_gate_loss_weight,
         "utility_regression_target": utility_regression_target,
         "calibrate_stop_margin": use_stop_margin_calibration,

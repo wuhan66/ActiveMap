@@ -1,0 +1,111 @@
+schema_version: activemap-external-datasets-v1
+
+protocol:
+  immutable_raw_assets: true
+  split_manifests_required: true
+  license_acceptance_out_of_band: true
+  test_labels_locked: true
+  normalized_episode_contract: activemap-episode-v1
+
+datasets:
+  - id: muno21
+    display_name: MUNO21
+    task_family: aerial_vector_map_update
+    modalities: [aerial_rgb, prior_road_graph, target_road_graph]
+    adapter: activemap.data.muno21
+    access: public_archive
+    source_url: https://favyen.com/muno21/
+    license_status: review_required
+    status: prepared
+
+  - id: sn7
+    display_name: SpaceNet 7
+    task_family: temporal_building_map_update
+    modalities: [monthly_rgb, building_polygons, unusable_data_mask]
+    adapter: activemap.data.sn7
+    access: public_archive
+    source_url: https://spacenet.ai/sn7-challenge/
+    license_status: spacenet_terms
+    status: prepared
+
+  - id: argotweak
+    display_name: ArgoTweak
+    task_family: structured_hd_map_update
+    modalities: [surround_camera, prior_vector_map, target_vector_map, atomic_edits]
+    adapter: activemap.data.structured_map:StructuredMapSample
+    access: terms_required
+    source_url: https://kth-rpl.github.io/ArgoTweak/
+    code_url: https://github.com/KTH-RPL/ArgoTweak_baselines
+    license_status: review_required
+    status: prepared
+
+  - id: tbv
+    display_name: Trust but Verify
+    task_family: hd_map_change_detection
+    modalities: [surround_camera, lidar, prior_vector_map, change_labels]
+    adapter: activemap.data.structured_map:StructuredMapSample
+    access: terms_required
+    source_url: https://www.argoverse.org/av2.html
+    license_status: argoverse_terms
+    status: source_audit
+
+  - id: nuscenes
+    display_name: nuScenes
+    task_family: online_vector_map_construction
+    modalities: [surround_camera, lidar, poses, vector_map]
+    adapter: external_native
+    access: terms_required
+    source_url: https://www.nuscenes.org/
+    license_status: nuscenes_terms
+    status: source_audit
+
+  - id: argoverse2
+    display_name: Argoverse 2 Sensor
+    task_family: online_vector_map_construction
+    modalities: [surround_camera, lidar, poses, vector_map]
+    adapter: external_native
+    access: terms_required
+    source_url: https://www.argoverse.org/av2.html
+    license_status: argoverse_terms
+    status: source_audit
+
+  - id: hrdx
+    display_name: HRDX
+    task_family: multimodal_vector_hd_map
+    modalities: [surround_camera, lidar, aerial_rgb, poses, vector_map, attributes]
+    adapter: external_native
+    access: project_download
+    source_url: https://github.com/honda-research-institute/HRDX
+    license_status: review_required
+    status: source_audit
+
+  - id: mapex_kth
+    display_name: MapEx KTH Indoor Maps
+    task_family: indoor_active_mapping_navigation
+    modalities: [occupancy_grid, predicted_map_ensemble, visibility_mask, frontier_goals]
+    adapter: activemap.data.navigation_map:NavigationMapEpisode
+    access: project_download
+    source_url: https://github.com/castacks/MapEx
+    license_status: bsd_3_clause_clear_code_asset_audit
+    status: source_audit
+
+  - id: cubicasa5k_pilot
+    display_name: CubiCasa5K Floorplan Pilot
+    task_family: indoor_editable_floorplan_update
+    modalities: [floorplan_raster, svg_polygons, room_graph]
+    adapter: activemap.data.structured_map:StructuredMapSample
+    access: public_archive
+    source_url: https://zenodo.org/records/2613548
+    license_status: cc_by_nc_sa_4_0
+    status: source_audit
+
+  - id: spacenet8
+    display_name: SpaceNet 8 Flood Detection
+    task_family: disaster_editable_map_update_and_navigation
+    modalities: [pre_event_rgb, post_event_rgb, building_polygons, road_graph, flood_state, road_speed]
+    adapter: activemap.data.disaster_map:DisasterMapEpisode
+    access: public_archive
+    source_url: https://spacenet.ai/sn8-challenge/
+    code_url: https://github.com/SpaceNetChallenge/SpaceNet8
+    license_status: cc_by_sa_4_0
+    status: download_ready
