@@ -1,0 +1,328 @@
+schema_version: activemap-sn7-active-catalog-selector-v1
+experiment_id: sn7_active_catalog_selector_qwen3_vl_4b_v1
+declared_date: 2026-07-17
+status: full_sft_audited_qwen_token_audit_running
+test_assets_read: false
+
+hypothesis: >-
+  Active evidence acquisition over a temporal remote-sensing catalog requires a hierarchical
+  retriever and an edit-conditioned controller that jointly choose STOP or one executable
+  evidence_id under quality, cost, and false-edit risk.
+
+dataset:
+  name: SpaceNet7
+  episodes: /mnt/mydisk/wh/ActiveMap/processed/sn7_v1/episodes_v3.jsonl
+  train_validation_episodes: 12409
+  train_episodes: 10286
+  validation_episodes: 2123
+  train_aois: 42
+  validation_aois: 9
+  aoi_overlap: 0
+  operations: {ADD: 4377, DELETE: 1875, KEEP: 5475, RESHAPE: 682}
+  evidence_per_episode: {minimum: 54, mean: 72.1395, p95: 78, maximum: 78}
+  sft_episode_boundary:
+    source: full_shards/shard-*/episodes.jsonl
+    merged_train_validation_sha256: 71f953952063e2e2acacbb6e3c86d30876b86a397b2a326b31c4881d78750dc6
+    merged_episodes: 12409
+    test_records_present: false
+
+teacher:
+  type: frozen_updater_counterfactual
+  checkpoint: /mnt/mydisk/wh/ActiveMap/runs/updater/v4_hierarchical_vector_change_scratch_seed20260716/best_quality.pt
+  policy_snapshot: sn7-updater-v4-vector-change-seed20260716
+  quality: 0.5_raster_iou_plus_0.5_edit_correct
+  cost_weight: 0.18
+  false_edit_weight: 0.35
+  budgets: [1.5, 3.0, 4.5]
+
+candidate_retriever:
+  type: runtime_observable_temporal_scale_diversity
+  max_candidates: 16
+  oracle_features_used: false
+  ranking_features: [scale, temporal_offset, clear_fraction, cost]
+  rationale: >-
+    Sixteen candidates preserve temporal extrema, anchor-near evidence, and all three scales
+    before clear/low-cost filling. Runtime candidates expose only id, time, scale, clear fraction,
+    signed temporal offset, and cost; redundant absolute offsets and repeated spatial windows are
+    excluded so every record must pass the predeclared 2048-token audit.
+  context_gate:
+    max_length: 2048
+    require_all_records_within_limit: true
+    require_all_records_have_supervised_tokens: true
+  pilot20:
+    global_positive_states: 98
+    exact_global_target_recall: 0.7346938775510204
+    train_exact_target_recall: 0.7307692307692307
+    validation_exact_target_recall: 0.7391304347826086
+    mean_positive_utility_regret: 0.010846576520374842
+    train_mean_positive_utility_regret: 0.006123496935917781
+    validation_mean_positive_utility_regret: 0.01618570996367413
+
+controller:
+  backbone: Qwen3-VL-4B-Instruct
+  stage: SELECT
+  input:
+    - current_registered_image_and_editable_prior
+    - direct_draft
+    - belief_distribution
+    - remaining_budget
+    - selected_evidence_history
+    - retrieved_candidate_catalog
+  actions:
+    - STOP
+    - ACQUIRE_evidence_id
+  prompt_target_metadata_exposed: false
+  sft:
+    max_length: 2048
+    lora_rank: 16
+    lora_alpha: 32
+    train_acquire_sampling_target: 0.25
+    validation_sampling: original_prevalence
+    sampling_ablation: shuffle_without_replacement
+    launcher: scripts/run_sn7_active_catalog_qwen.sh
+    resource_ceiling:
+      gpus_per_server: 2
+      measured_smoke_peak_memory_mib: 13482
+      primary_gpu: 0
+      second_gpu: 2
+      refuses_occupied_gpu: true
+    pilot_v4:
+      archive_sha256: 1403c9fab8b17c321858786dfedf87334da60ee7da4d0dbb50837963b2dcf56a
+      train_records: 284
+      validation_records: 278
+      token_audit_passed: true
+      maximum_train_tokens: 1607
+      maximum_validation_tokens: 1603
+      forward_backward_smoke_returncode: 0
+      smoke_train_loss: 0.8764998018741608
+      smoke_eval_loss: 0.28790831565856934
+      balanced_sampler_smoke_returncode: 0
+      balanced_sampler_smoke_train_loss: 0.47266384214162827
+      balanced_sampler_smoke_eval_loss: 0.3065994381904602
+      balanced_sampler_smoke_peak_memory_mib: 13482
+    evaluation:
+      script: scripts/evaluate_active_catalog_selector.py
+      three_seed_aggregator: scripts/aggregate_active_catalog_seeds.py
+      hidden_sidecar_schema: active-catalog-sequential-selector-sft-v2
+      primary_bootstrap_group: aoi_id
+      secondary_bootstrap_group: source_episode
+      bootstrap_repetitions: 2000
+      baselines: [always_stop, cheapest, clear_per_cost, random, shortlist_oracle]
+      primary_metrics:
+        - realized_utility_mean
+        - selection_macro_f1
+        - exact_evidence_recall
+        - mean_regret
+        - false_call_rate
+        - harmful_call_rate_all_states
+        - mean_cost_per_state
+
+full_oracle:
+  server: nts-server.harmo.icu
+  physical_gpu: 2
+  shards: 8
+  output: /mnt/mydisk/wh/ActiveMap/processed/sn7_v1/agent/sequential_selector_v1/selector_states_train_val.jsonl
+  log: /mnt/mydisk/wh/ActiveMap/logs/joint_debug/sn7_sequential_full_oracle.log
+  merge_contract:
+    source_episode_coverage: 12409
+    duplicate_state_ids: 0
+    allowed_splits: [train, val]
+    atomic_output: true
+  audited_result:
+    source_episodes: 12409
+    states: 39933
+    train_states: 33236
+    validation_states: 6697
+    acquire_targets: 3392
+    stop_targets: 36541
+    duplicate_source_budget_steps: 0
+    test_assets_read: false
+    output_sha256: 00d9993a4ed01e789529531a0926f16a3346246b363b3728ac772a5adb4a99b5
+  postprocess:
+    watcher: scripts/watch_sn7_full_sft.sh
+    sft_stage: scripts/prepare_sn7_sequential_selector.sh full_sft
+    static_audit: scripts/audit_active_catalog_sft.py
+    requires_audited_atomic_merge: true
+    starts_training_automatically: false
+
+execution_reserve:
+  launcher: scripts/run_sn7_active_catalog_qwen.sh
+  gate_verifier: scripts/verify_sn7_active_catalog_gates.py
+  unattended_watcher: scripts/watch_sn7_active_catalog_qwen.sh
+  joint_rl_protocol: docs/ACTIVE_CATALOG_JOINT_RL_PROTOCOL.md
+  preflight_stage: preflight
+  maximum_concurrent_gpus_per_server: 2
+  measured_memory_per_qwen3_vl_4b_lora_run_mib: 13482
+  minimum_free_disk_gib_before_training: 80
+  sequence:
+    - full_sft_static_audit
+    - qwen_token_audit
+    - full_protocol_smoke
+    - weighted_seed1_train_and_validation
+    - unweighted_sampling_seed1_ablation
+    - weighted_three_seed_train_and_validation
+    - shared_aoi_bootstrap_aggregation
+    - recurrent_closed_loop_smoke_and_validation
+    - recurrent_paired_aoi_baseline_comparison
+    - executable_vector_writeback_paired_aoi_comparison
+    - multimodal_preference_build_after_selector_promotion
+    - tool_belief_joint_training_after_promotion
+    - constrained_rl_after_joint_promotion
+    - frozen_test_once
+  reserved_outputs:
+    weighted_seed1: qwen3vl4b_seed1
+    unweighted_seed1: qwen3vl4b_unweighted_seed1
+    weighted_three_seed: qwen3vl4b_three_seed
+    closed_loop_smoke: closed_loop_smoke
+    closed_loop_seed1: closed_loop_seed1
+  policy:
+    start_seed1_before_three_seed: true
+    run_three_seeds_only_after_seed1_promotion: true
+    keep_validation_natural_prevalence: true
+    retain_train_logs_checkpoints_resource_history_and_rollout_traces: true
+    do_not_touch_foreign_gpu_processes: true
+    watcher_auto_starts_seed1_by_default: false
+    watcher_seed1_opt_in_environment: AUTO_START_SEED1=1
+
+closed_loop_validation:
+  bundle_builder: scripts/prepare_active_catalog_closed_loop_bundle.py
+  evaluator: scripts/evaluate_active_catalog_closed_loop.py
+  resource_launcher: scripts/launch_active_catalog_closed_loop.py
+  baseline_evaluator: scripts/evaluate_active_catalog_closed_loop_baselines.py
+  paired_comparator: scripts/compare_active_catalog_closed_loop.py
+  source_states: /mnt/mydisk/wh/ActiveMap/processed/sn7_v1/agent/sequential_selector_v1/selector_states_train_val.jsonl
+  source_episodes: /mnt/mydisk/wh/ActiveMap/processed/sn7_v1/agent/sequential_selector_v1/full/episodes_train_val.jsonl
+  validation_only: true
+  initial_states_only: true
+  model_selected_state_transitions: true
+  oracle_next_state_replay: false
+  joint_transition_export:
+    schema: active-catalog-joint-transition-v1
+    train_stage: joint_transition_train
+    validation_source: closed_loop_seed1
+    audit_stage: audit_joint_transitions
+    requires_disjoint_aois_and_episodes: true
+    exports_oracle_action_or_utility: false
+    initial_tool_execution_mode: none
+    explicit_tool_results_required_for_stage_c_claim: true
+    grounded_tool_data:
+      builder: scripts/build_active_catalog_grounded_tool_data.py
+      audit: scripts/audit_active_catalog_grounded_tool_data.py
+      tools: [IMAGE_QUALITY, TEMPORAL_CHANGE]
+      selection_source: model_selected_executed_rollout
+      duplicate_episode_evidence_calls_cached: true
+      component_training: scripts/train_post_acquisition_tool_belief.py
+      zero_tool_evaluation: true
+      shuffled_tool_contrastive_loss: true
+      selective_agent_tool_calling_established: false
+    selective_tool_gate:
+      feature_builder: scripts/build_active_catalog_tool_gate_features.py
+      trainer: scripts/train_visual_tool_gate.py
+      input_visibility: pre_tool_observable_only
+      hidden_utility: tool_belief_counterfactual_quality_cost_safety_gain_v1
+      calibration: task_grouped_oof_train_only
+      selection_objective: proxy_utility
+      maximum_call_rate: 0.50
+      requires_recurrent_writeback_for_agent_claim: true
+    recurrent_tool_branches:
+      no_tool: closed_loop_seed1
+      forced: closed_loop_forced_tools
+      selective: closed_loop_selective_tools
+      paired_comparison: compare_closed_loop_tool_branches
+      identical_episode_budget_keys: true
+      tool_cost_in_quality_cost_utility: true
+  explicit_geospatial_tool_calls: false
+  max_acquisitions: 2
+  bootstrap_repetitions: 2000
+  primary_metrics:
+    - terminal_accuracy
+    - false_edit_rate
+    - missed_edit_rate
+    - mean_spent_cost
+    - mean_quality_gain
+    - mean_quality_cost_utility
+  baselines:
+    - always_stop
+    - cheapest
+    - clear_per_cost
+    - uncertainty_gate
+    - random
+    - shortlist_oracle_upper_bound
+  comparison_contract:
+    identical_episode_budget_keys: true
+    bootstrap_group: aoi_id
+    quality_gain_semantics: frozen_teacher_proxy
+  resource_ceiling:
+    gpus: 1
+    occupied_gpu_refusal: true
+    preserve_gpu_resource_history: true
+  executable_writeback:
+    converter: scripts/convert_active_catalog_closed_loop_for_writeback.py
+    evaluator: scripts/evaluate_agent_map_writeback.py
+    resource_launcher: scripts/launch_active_catalog_writeback.py
+    comparator: scripts/compare_agent_writebacks.py
+    promotion_assessor: scripts/assess_active_catalog_closed_loop_promotion.py
+    example_renderer: scripts/render_active_catalog_closed_loop_examples.py
+    protocol_name: sn7-active-catalog-vector-writeback-v1
+    compare_against: strongest_validation_selected_non_oracle_baseline
+    bootstrap_group: aoi_id
+    metrics:
+      - raster_iou_gain
+      - added_polygon_iou
+      - removed_polygon_iou
+      - vector_replay_iou
+      - component_count_absolute_error
+      - vector_delta_topology_valid
+    preflight_dependencies: [affine, rasterio, shapely, torch]
+    resource_ceiling:
+      gpus: 1
+      occupied_gpu_refusal: true
+      preserve_gpu_resource_history: true
+    promotion_gate:
+      quality_cost_utility_ci95_low_above: 0.0
+      raster_iou_gain_auc_ci95_low_above: 0.0
+      false_edit_rate_delta_ci95_high_at_most: 0.02
+      terminal_accuracy_delta_ci95_low_at_least: -0.01
+      topology_valid_rate_delta_ci95_low_at_least: -0.01
+    visualization:
+      split: val
+      examples: [largest_map_quality_gain, failure_case, safe_stop, cost_efficient_update]
+      directory_per_example: true
+      clean_panels_without_titles_or_frames: true
+      composite_default: false
+      files_per_example:
+        - 01_initial_evidence.png
+        - 02_acquired_evidence.png
+        - 03_belief_revision.png
+        - 04_prior_mask.png
+        - 05_committed_mask.png
+        - 06_target_mask.png
+        - 07_error_mask.png
+        - metadata.json
+
+full_sft:
+  path: /home/wh/ActiveMap/processed/sn7_v1/agent/sequential_selector_v1/full/active_catalog_sft_v4
+  archive_sha256: 4c25b0839aae3291201fdd45a23c3656bb0766daf17db010fb113088bcead11d
+  source_summary_sha256: 81c312e851978ff2569fd0f544941750fb283b24dec172ddcc79a91fd443a958
+  train_records: 33236
+  validation_records: 6697
+  rendered_episodes: 12409
+  static_audit_passed: true
+  smoke_train_records: 2
+  smoke_validation_records: 2
+  test_assets_read: false
+
+promotion:
+  retriever_positive_opportunity_recall_at_least: 0.90
+  selector_macro_f1_above_always_stop: true
+  realized_utility_positive: true
+  utility_task_bootstrap_ci_above_zero: true
+  false_call_rate_at_most: 0.10
+  evaluate_by_ground_truth_edit: true
+  evaluate_by_aoi: true
+
+blocked_until_full_oracle_and_sft_smoke:
+  - full_qwen_sft
+  - tool_belief_joint_training
+  - constrained_rl
+  - frozen_test

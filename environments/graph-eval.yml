@@ -1,0 +1,13 @@
+name: activemap-graph
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - go=1.23
+  - pip>=24
+  - pip:
+      - "-e .[graph-eval]"
+
+# Create from the repository root without changing the active training environment:
+# conda env create -p /home/wh/ActiveMap/envs/activemap-graph \
+#   -f environments/graph-eval.yml

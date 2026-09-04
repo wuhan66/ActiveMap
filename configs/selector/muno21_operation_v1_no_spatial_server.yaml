@@ -1,0 +1,35 @@
+seed: 20260803
+data:
+  updater_checkpoint: /mnt/mydisk/wh/ActiveMap/runs/updater/muno21_road_v4_explicit_change_scratch_seed20260726/best_val_loss.pt
+  samples: /mnt/mydisk/wh/ActiveMap/processed/muno21_v2/updater/updater_samples.jsonl
+  feature_cache: /mnt/mydisk/wh/ActiveMap/processed/muno21_v2/operation_selector/v4_seed20260726_train_val_features.pt
+  refresh_cache: false
+model:
+  spatial_size: 64
+  base_channels: 32
+  hidden_dim: 256
+  dropout: 0.20
+  use_spatial: false
+  use_context: true
+training:
+  device: auto
+  max_epochs: 80
+  min_epochs: 15
+  patience: 15
+  batch_size: 32
+  num_workers: 2
+  learning_rate: 0.0003
+  min_learning_rate: 0.000001
+  weight_decay: 0.0001
+  sampling_power: 0.75
+  class_weight_beta: 0.99
+  focal_gamma: 1.5
+  label_smoothing: 0.02
+  false_edit_limit: 0.05
+  grad_clip: 1.0
+  scheduler_factor: 0.5
+  scheduler_patience: 4
+monitoring:
+  tensorboard: true
+  pause_poll_seconds: 10
+output_dir: /mnt/mydisk/wh/ActiveMap/runs/selector/muno21_operation_v1_no_spatial_seed20260803

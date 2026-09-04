@@ -1,0 +1,25 @@
+task: selector
+base_config: ../selector/muno21_evidence_conservative_v5_server.yaml
+output_root: /home/wh/ActiveMap/runs/ablations/muno21_selector_structural
+seeds: [20260821, 20260822, 20260823]
+reference: full
+
+evaluation:
+  enabled: true
+  split: val
+  budgets: [1.5, 3.0, 4.5]
+  primary_budget: 3.0
+
+experiments:
+  - name: generic
+    overrides:
+      ablation:
+        condition_on_hypothesis: false
+
+  - name: full
+    overrides: {}
+
+  - name: no_stop
+    overrides:
+      ablation:
+        allow_stop: false

@@ -1,0 +1,44 @@
+project:
+  name: active_map_sn7_v1
+  seed: 20260710
+
+paths:
+  raw_root: data/raw/sn7
+  manifest: data/manifests/sn7.parquet
+  processed_root: data/processed/sn7_v1
+  split_dir: splits
+
+split:
+  group_column: aoi_id
+  train_ratio: 0.70
+  val_ratio: 0.15
+  test_ratio: 0.15
+
+geometry:
+  keep_iou_min: 0.80
+  reshape_iou_min: 0.20
+  max_centroid_shift_m: 20.0
+  min_area_m2: 16.0
+
+temporal_filter:
+  max_month_gap: 1
+  min_change_persistence_frames: 2
+  max_invalid_fraction: 0.50
+
+sampling:
+  max_per_operation_per_pair: 5
+  seed: 20260710
+
+rasterization:
+  method: pixel_center_with_one_pixel_fallback
+
+evidence:
+  context_meters: [0, 32, 96]
+  scales: [1, 2, 4]
+  budgets: [1, 2, 4, 8]
+
+synthetic_prior:
+  max_fraction: 0.50
+  shift_meters: [2, 5, 10]
+  vertex_noise_meters: [1, 2, 4]
+  area_scale: [0.8, 1.2]

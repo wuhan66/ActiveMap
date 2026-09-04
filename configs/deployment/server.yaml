@@ -1,0 +1,76 @@
+service_name: activemap-models
+host: 127.0.0.1
+port: 8008
+
+models:
+  updater:
+    kind: updater
+    enabled: true
+    required: false
+    device: cuda:0
+    checkpoint: /mnt/mydisk/wh/ActiveMap/runs/updater/base_v3/best.pt
+
+  selector:
+    kind: selector
+    enabled: true
+    required: false
+    device: cpu
+    checkpoint: /mnt/mydisk/wh/ActiveMap/runs/selector/full_v1/best.pt
+
+  operation_selector:
+    kind: operation_selector
+    enabled: true
+    required: false
+    device: cuda:3
+    checkpoint: /mnt/mydisk/wh/ActiveMap/runs/selector/muno21_operation_v1_seed20260803/best.pt
+    options:
+      updater_checkpoint: /mnt/mydisk/wh/ActiveMap/runs/updater/muno21_road_v4_explicit_change_scratch_seed20260726/best_val_loss.pt
+      update_threshold: 0.69
+
+  agent_qwen3_4b:
+    kind: hf_agent
+    enabled: true
+    required: true
+    device: cuda:1
+    model_path: /home/wh/hf_models/Qwen3-4B
+    options:
+      max_new_tokens: 160
+      fallback_to_greedy: true
+      enable_thinking: false
+
+  agent_qwen3_8b:
+    kind: hf_agent
+    enabled: false
+    required: false
+    device: cuda:2
+    model_path: /home/wh/hf_models/Qwen3-8B
+    options:
+      max_new_tokens: 160
+      fallback_to_greedy: true
+      enable_thinking: false
+
+  agent_deepseek_7b:
+    kind: hf_agent
+    enabled: false
+    required: false
+    device: cuda:2
+    model_path: /home/wh/hf_models/DeepSeek-R1-Distill-Qwen-7B
+    options:
+      max_new_tokens: 256
+      fallback_to_greedy: true
+      enable_thinking: false
+
+  rsprompter:
+    kind: rsprompter
+    enabled: false
+    required: false
+    device: cuda:2
+    python: /home/wh/yes/envs/rsprompter/bin/python
+    repository: /home/wh/projects/activemap-v1/third_party/RSPrompter
+    config_path: /home/wh/projects/activemap-v1/configs/rsprompter/active_anchor_512.py
+    checkpoint: /mnt/mydisk/wh/ActiveMap/runs/rsprompter/best.pth
+    adapter_script: /home/wh/projects/activemap-v1/scripts/rsprompter_predict.py
+    work_dir: /mnt/mydisk/wh/ActiveMap/cache/rsprompter_inference
+    options:
+      score_threshold: 0.35
+      overlap_threshold: 0.10

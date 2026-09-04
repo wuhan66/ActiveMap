@@ -1,0 +1,45 @@
+task: updater
+base_config: ../updater/sn7_v4_hierarchical_vector_change_scratch_server.yaml
+output_root: /home/wh/ActiveMap/runs/ablations/sn7_updater_structural
+seeds: [20260716, 20260719, 20260722]
+reference: full
+
+evaluation:
+  enabled: true
+  split: val
+  device: auto
+  batch_size: 32
+  num_workers: 4
+  commit_threshold: 0.0
+
+experiments:
+  - name: full
+    overrides:
+      training:
+        resume: false
+
+  - name: no_prior
+    overrides:
+      model:
+        use_prior: false
+        vector_change_encoder: false
+        vector_change_to_edit_head: false
+      training:
+        resume: false
+
+  - name: no_edit_classifier
+    overrides:
+      model:
+        auxiliary_edit_head: false
+        vector_change_to_edit_head: false
+      loss:
+        edit: 0.0
+      training:
+        resume: false
+
+  - name: edit_specific_geometry
+    overrides:
+      model:
+        geometry_head_mode: edit_specific
+      training:
+        resume: false

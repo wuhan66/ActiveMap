@@ -1,0 +1,51 @@
+task: updater
+base_config: ../updater/base.yaml
+output_root: ../../outputs/updater_ablations
+seeds: [20260710, 20260711, 20260712]
+reference: full
+
+evaluation:
+  enabled: true
+  # Keep routine ablations validation-only; never open test from this matrix.
+  split: val
+  device: auto
+  batch_size: 32
+  num_workers: 0
+  commit_threshold: 0.0
+
+experiments:
+  - name: full
+    overrides: {}
+
+  - name: no_prior
+    overrides:
+      model:
+        use_prior: false
+
+  - name: no_edit_loss
+    overrides:
+      loss:
+        edit: 0.0
+
+  - name: no_geometry_loss
+    overrides:
+      loss:
+        geometry: 0.0
+
+  - name: no_false_edit_penalty
+    overrides:
+      loss:
+        false_edit: 0.0
+
+  - name: no_confidence_loss
+    overrides:
+      loss:
+        confidence: 0.0
+
+  - name: segmentation_only
+    overrides:
+      loss:
+        edit: 0.0
+        geometry: 0.0
+        false_edit: 0.0
+        confidence: 0.0

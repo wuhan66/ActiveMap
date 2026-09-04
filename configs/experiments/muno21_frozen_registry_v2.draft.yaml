@@ -1,0 +1,89 @@
+schema_version: muno21-frozen-registry-v2-draft
+status: predeclaration_blocked
+dataset: muno21
+method: edit_conditioned_proactive_tools_safe_commit
+selector_training_seeds: [20260811, 20260812, 20260813]
+validation_rollout_seeds: [20260822, 20260823, 20260824]
+test_policy: frozen_once
+test_assets_read: false
+
+claim_scope:
+  promoted_claims: [C2, C5]
+  excluded_branches: [direct_vlm, dpo, grpo, agent_tool_to_belief]
+  note: >-
+    Selector-training seeds and rollout seeds have different semantics. The
+    frozen test cannot open until each test run is bound to one independent
+    selector-training seed and the mapping is recorded explicitly.
+
+protocol:
+  image_size: 512
+  budgets: [1.5, 3.0, 4.5]
+  updater_threshold: 0.5
+  graph_simplify_tolerance: 3.0
+  evidence_fusion: confidence_weighted
+  max_tool_calls: 2
+  bootstrap_unit: task_id
+  bootstrap_repetitions: 10000
+  bootstrap_seed: 20260807
+  methods:
+    - always_stop
+    - generic_selector
+    - edit_conditioned_selector
+    - edit_conditioned_proactive_tools_safe_commit
+  primary_comparisons:
+    - edit_conditioned_proactive_tools_safe_commit_vs_always_stop
+    - edit_conditioned_proactive_tools_safe_commit_vs_generic_selector
+  primary_metrics:
+    - apls_improvement
+    - pixel_f1_improvement
+    - false_edit_rate
+    - missed_edit_rate
+    - mean_cost
+    - balanced_utility
+
+shared_artifacts:
+  - id: frozen_updater
+    path: "${STORAGE_ROOT}/models/frozen_updater/muno21_v4_seed20260726/best_val_loss.pt"
+    sha256: 08e85421da544ad9af3e773b7a9946dcf66c7be3bce851ebabbcab87515398e9
+  - id: tool_need_gate
+    path: "${STORAGE_ROOT}/runs/agent/muno21_tool_need_gate_v11_seed20260831/gate.joblib"
+    sha256: 1a62f592cf2753ec7ad352f3f326950fbd5084d2382c31073999bfea66d3f00f
+  - id: tool_belief
+    path: "${STORAGE_ROOT}/runs/agent/tool_belief_anchored_v4_seed20260821/best.pt"
+    sha256: 95488de9463e2b7b040f112504f466e8be09381c81650bbab577640812f2bb48
+
+selector_artifacts:
+  "20260811":
+    path: "${STORAGE_ROOT}/runs/selector/muno21_evidence_conservative_v5_seed20260811/best.pt"
+    sha256: 41d5303e997dc6b7b9c87da6577f686354b3c64f304cb7210d5f193bc2a71848
+  "20260812":
+    path: "${STORAGE_ROOT}/runs/selector/muno21_evidence_conservative_v5_seed20260812/best.pt"
+    sha256: 035f3de350cc2f752b8f24eab499814d1433e12c49fef4f6fb600ca4ad55ac89
+  "20260813":
+    path: "${STORAGE_ROOT}/runs/selector/muno21_evidence_conservative_v5_seed20260813/best.pt"
+    sha256: f809ea1f853d99d2a0a380d04bbc155c6391e73fd5a82328002e4b6073d1b9bd
+
+validation_evidence:
+  - id: official_vs_always_stop
+    path: "${STORAGE_ROOT}/runs/paper_evidence/muno21_official_three_seed_20260805/official_vs_always_stop.json"
+    sha256: 5889a3eac7e963c442d160c642bc76e51729abfe8e7ad1bf9b772bab093d0efb
+  - id: official_vs_old_selector
+    path: "${STORAGE_ROOT}/runs/paper_evidence/muno21_official_three_seed_20260805/official_vs_old_selector.json"
+    sha256: ccf2b0510d12e301749649f25d1e8a8566d6a973b984fb248347b2e7657f755c
+  - id: validation_protocol
+    path: "${STORAGE_ROOT}/runs/paper_evidence/muno21_official_three_seed_20260805/protocol.json"
+    sha256: 4c67a09cd8a17252c9ce7ca7220298c5504efcb2e8b40ae84810967ec55ed7ae
+
+test_manifest_artifacts: []
+code_artifacts: []
+
+test_gate:
+  ready: false
+  blockers:
+    - Create a path-only MUNO21 test manifest and immutable task/region ID list.
+    - Audit train/validation/test task and region overlap without reading test labels.
+    - Bind each test run to selector seeds 20260811/20260812/20260813; do not relabel rollout seeds as model seeds.
+    - Implement a VLM/RL-free v2 launcher for Always-STOP, generic, edit-conditioned, and proactive-safe policies.
+    - Hash the launcher, evaluator, writeback, official graph metric, exporter, CLI, and frozen-access gate.
+    - Confirm the independent MUNO21 access ledger and output root do not exist.
+    - Complete the already-open SN7 frozen test before authorizing MUNO21 test access.

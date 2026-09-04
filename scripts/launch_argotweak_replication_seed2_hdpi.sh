@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PROJECT_ROOT="${PROJECT_ROOT:-/home/wh/projects/activemap-v1}"
+STORE="${STORE:-/home/wh/ActiveMap}"
+OFFICIAL="${OFFICIAL:-${STORE}/external/ArgoTweak_baselines}"
+PYTHON="${PYTHON:-${STORE}/envs/argotweak-legacy/bin/python}"
+DATA="${STORE}/datasets/argotweak/tbv_balanced_24_8_v1/official_full"
+SEED="${ARGOTWEAK_SEED:-20260832}"
+RUN="${STORE}/runs/argotweak/full_domain_adaptation_balanced24_v1/four_gpu_seed${SEED}"
+LOG="${STORE}/logs/argotweak_full_domain_adaptation_balanced24_seed${SEED}.log"
+
+for path in \
+  "${OFFICIAL}/projects/configs/argotweak_explainable.py" \
+  "${OFFICIAL}/checkpoints/argotweak_baseline.pth" \
+  "${DATA}/train_argotweak_balanced24.pkl" \
+  "${DATA}/val_argotweak_balanced8.pkl"; do
+  [[ -s "${path}" ]] || { echo "missing input: ${path}" >&2; exit 3; }
+done
+[[ ! -e "${RUN}" ]] || { echo "refusing existing output: ${RUN}" >&2; exit 4; }
+mkdir -p "${RUN}" "$(dirname "${LOG}")"
+
+"${PYTHON}" - "${RUN}/protocol.json" "${SEED}" <<'PY'
+import json, sys
+from pathlib import Path
+Path(sys.argv[1]).write_text(json.dumps({
+    "schema_version": "activemap-argotweak-full-domain-adaptation-v1",
+    "train_logs": 24,
+    "val_logs": 8,
+    "official_frames": 3615,
+    "initial_checkpoint_sha256": "c42c29a88223db900464cfa88ef2a6f6c5575e5baf899b9c01a07bd674c31ce9",
+    "epochs": 10,
+    "physical_gpus": [1, 2, 3, 4],
+    "samples_per_gpu": 1,
+    "auto_scale_lr_base_batch_size": 8,
+    "seed": int(sys.argv[2]),
+    "split": "train+validation",
+    "test_assets_read": False,
+}, indent=2) + "\n")
+PY
+
+export PYTHONPATH="${OFFICIAL}:${PYTHONPATH:-}"
+export CUDA_VISIBLE_DEVICES=1,2,3,4
+export OMP_NUM_THREADS=2
+export MKL_NUM_THREADS=2
+
+if "${PYTHON}" -m torch.distributed.launch \
+  --nproc_per_node=4 --master_port=29532 \
+  "${PROJECT_ROOT}/scripts/run_argotweak_official_train.py" \
+  --official-root "${OFFICIAL}" \
+  --config "${OFFICIAL}/projects/configs/argotweak_explainable.py" \
+  --work-dir "${RUN}" \
+  --train-ann "${DATA}/train_argotweak_balanced24.pkl" \
+  --val-ann "${DATA}/val_argotweak_balanced8.pkl" \
+  --checkpoint "${OFFICIAL}/checkpoints/argotweak_baseline.pth" \
+  --epochs 10 --workers 4 --seed "${SEED}" \
+  --launcher pytorch --autoscale-lr >"${LOG}" 2>&1; then
+  date -Is >"${RUN}/TRAINING_COMPLETED"
+else
+  date -Is >"${RUN}/TRAINING_FAILED"
+  exit 1
+fi

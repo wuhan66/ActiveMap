@@ -1,0 +1,61 @@
+schema_version: activemap-cross-dataset-protocol-v1
+
+datasets:
+  sn7:
+    role: primary_temporal_editable_map_update
+    geometry: building_polygon
+    supervision: real_temporal
+    agent_evaluation: true
+    result_policy: validation_then_frozen_once
+    primary_metrics: [quality_cost_auc, false_edit_rate, executable_map_quality]
+  muno21:
+    role: external_temporal_geometry_generalization
+    geometry: road_graph
+    supervision: real_temporal
+    agent_evaluation: true
+    result_policy: frozen_once
+    primary_metrics: [quality_cost_auc, false_edit_rate, topology_validity]
+  inria:
+    role: auxiliary_boundary_pretraining_only
+    geometry: building_polygon
+    supervision: real_single_timestamp
+    agent_evaluation: false
+    result_policy: validation_only
+    primary_metrics: [building_iou, boundary_f1, polygon_iou]
+
+transfer_ablations:
+  - source: inria
+    target: sn7
+    config: configs/updater/sn7_from_inria_server.yaml
+    init_scope: segmentation
+    claim: boundary_pretraining_ablation
+  - source: sn7
+    target: muno21
+    config: configs/updater/muno21_road_v8_from_sn7_encoder_server.yaml
+    init_scope: encoder
+    claim: cross_geometry_encoder_transfer_ablation
+
+evidence:
+  sn7:
+    expected_schema: active-catalog-tool-writeback-promotion-v1
+    minimum_seeds: 3
+  muno21:
+    expected_schema: activemap-paired-rollout-report-v1
+    comparison_id: agent_vs_edit_conditioned
+    minimum_seeds: 3
+
+aggregation:
+  pool_samples_across_datasets: false
+  report_per_dataset_metrics: true
+  cross_geometry_claim_requires: [sn7, muno21]
+  allow_macro_average_as_primary: false
+
+allowed_claims:
+  - SN7 supports temporal editable building-map update claims.
+  - MUNO21 supports external temporal road-graph generalization claims.
+  - Inria supports boundary pretraining and transfer ablations only.
+
+forbidden_claims:
+  - Inria is an Agent or temporal map-update benchmark.
+  - A pooled cross-dataset score establishes generalization.
+  - Validation-only SN7 evidence establishes a frozen-test result.

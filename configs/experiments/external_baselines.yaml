@@ -1,0 +1,670 @@
+schema_version: activemap-external-baselines-v1
+storage_root_env: ACTIVEMAP_STORAGE_ROOT
+
+protocol:
+  splits_from_activemap_manifests_only: true
+  validation_selects_checkpoint_and_thresholds: true
+  frozen_test_once: true
+  common_preprocessing_required: true
+  immutable_source_commit_required_before_run: true
+  license_review_required_before_distribution: true
+  output_contract: activemap-external-baseline-result-v1
+
+suites:
+  - id: muno21_official_map_update
+    dataset: muno21
+    comparison_scope: direct
+    priority: important
+    metrics: [apls_improvement, pixel_f1_improvement, no_change_error_rate]
+    benchmark_reference:
+      title: "Beyond Road Extraction: A Dataset for Map Update Using Aerial Images"
+      venue: ICCV
+      publication_year: 2021
+      publication_date: 2021-10
+      paper_url: https://openaccess.thecvf.com/content/ICCV2021/html/Bastani_Beyond_Road_Extraction_A_Dataset_for_Map_Update_Using_Aerial_ICCV_2021_paper.html
+    baselines:
+      - id: recurrent_unet_fuse
+        display_name: RecurrentUNet + Fuse
+        priority: optional
+        origin: published_method_adapted_by_muno21
+        paper_title: Road Detection and Centerline Extraction via Deep Recurrent Convolutional Neural Network U-Net
+        venue: IEEE Transactions on Geoscience and Remote Sensing
+        publication_year: 2019
+        publication_date: 2019-05
+        paper_url: https://doi.org/10.1109/TGRS.2019.2912301
+        kind: external_training
+        source_url: https://github.com/favyen/muno21
+        source_commit: 016f7cfc3d7d21b533a828d6636a3ae86a1ed415
+        license_status: review_required
+        adapter: muno21_graph_fuse
+        reproducibility:
+          code: official_public_source_locked
+          weights: not_applicable
+          data: bootstrap_incomplete
+          execution: source_audit
+        status: source_audit
+      - id: roadtracer_fuse
+        display_name: RoadTracer + Fuse
+        priority: important
+        origin: published_method_adapted_by_muno21
+        paper_title: "RoadTracer: Automatic Extraction of Road Networks From Aerial Images"
+        venue: CVPR
+        publication_year: 2018
+        publication_date: 2018-06
+        paper_url: https://openaccess.thecvf.com/content_cvpr_2018/html/Bastani_RoadTracer_Automatic_Extraction_CVPR_2018_paper.html
+        kind: external_training
+        source_url: https://github.com/mitroadmaps/roadtracer
+        source_commit: null
+        license_status: review_required
+        adapter: muno21_graph_fuse
+        status: source_audit
+      - id: sat2graph_fuse
+        display_name: Sat2Graph + Fuse
+        priority: optional
+        origin: published_method_adapted_by_muno21
+        paper_title: "Sat2Graph: Road Graph Extraction through Graph-Tensor Encoding"
+        venue: ECCV
+        publication_year: 2020
+        publication_date: 2020-08
+        paper_url: https://www.ecva.net/papers/eccv_2020/papers_ECCV/papers/123690052.pdf
+        kind: external_training
+        source_url: https://github.com/songtaohe/Sat2Graph
+        source_commit: null
+        license_status: review_required
+        adapter: muno21_graph_fuse
+        status: source_audit
+      - id: roadconnect_fuse
+        display_name: RoadConnect + Fuse
+        priority: optional
+        origin: published_method_adapted_by_muno21
+        paper_title: Improved Road Connectivity by Joint Learning of Orientation and Segmentation
+        venue: CVPR
+        publication_year: 2019
+        publication_date: 2019-06
+        paper_url: https://openaccess.thecvf.com/content_CVPR_2019/html/Batra_Improved_Road_Connectivity_by_Joint_Learning_of_Orientation_and_Segmentation_CVPR_2019_paper.html
+        kind: external_training
+        source_url: https://github.com/anil-2185/road_connectivity
+        source_commit: null
+        license_status: review_required
+        adapter: muno21_graph_fuse
+        status: source_audit
+      - id: maid
+        display_name: MAiD
+        priority: optional
+        origin: published_map_editing_method
+        paper_title: Machine-Assisted Map Editing
+        venue: ACM SIGSPATIAL
+        publication_year: 2018
+        publication_date: 2018-11
+        paper_url: https://favyen.com/maid.pdf
+        kind: external_training
+        source_url: https://github.com/mitroadmaps/roadtracer
+        source_commit: null
+        license_status: review_required
+        adapter: muno21_graph_fuse
+        status: source_audit
+      - id: muno21_prune_spurious
+        display_name: RoadTracer + Prune-Spurious
+        priority: important
+        origin: muno21_benchmark_method
+        paper_title: "Beyond Road Extraction: A Dataset for Map Update Using Aerial Images"
+        venue: ICCV
+        publication_year: 2021
+        publication_date: 2021-10
+        paper_url: https://openaccess.thecvf.com/content/ICCV2021/html/Bastani_Beyond_Road_Extraction_A_Dataset_for_Map_Update_Using_Aerial_ICCV_2021_paper.html
+        kind: external_training
+        source_url: https://github.com/favyen/muno21
+        source_commit: null
+        license_status: review_required
+        adapter: muno21_graph_fuse
+        status: source_audit
+      - id: sam_road
+        display_name: SAM-Road
+        priority: important
+        origin: published_method_adapted_by_muno21
+        paper_title: Segment Anything Model for Road Network Graph Extraction
+        venue: CVPR Workshops
+        publication_year: 2024
+        publication_date: 2024-06
+        paper_url: https://openaccess.thecvf.com/content/CVPR2024W/SG2RL/html/Hetang_Segment_Anything_Model_for_Road_Network_Graph_Extraction_CVPRW_2024_paper.html
+        kind: external_training
+        source_url: https://github.com/htcr/sam_road
+        source_commit: 04b67c503f120ecff2b2dc5a2041ea6d300e306a
+        license_status: mit
+        reproducibility:
+          code: official_public
+          weights: public
+          data: public
+          execution: official_code_adapted_validation_complete_not_promoted
+        adapter: muno21_graph_fuse
+        status: validation_complete
+      - id: sam_road_plus_plus
+        display_name: SAM-Road++
+        priority: optional
+        origin: published_method_adapted_by_muno21
+        paper_title: "Towards Satellite Image Road Graph Extraction: A Global-Scale Dataset and a Novel Method"
+        venue: CVPR
+        publication_year: 2025
+        publication_date: 2025-06
+        paper_url: https://openaccess.thecvf.com/content/CVPR2025/papers/Yin_Towards_Satellite_Image_Road_Graph_Extraction_A_Global-Scale_Dataset_and_CVPR_2025_paper.pdf
+        kind: external_training
+        source_url: https://github.com/earth-insights/samroadplus
+        source_commit: 44c6e7bcdabf1abb0bcf84c75194dc9a48731bf2
+        license_status: no_license_detected
+        reproducibility:
+          code: official_public_no_license
+          weights: not_released
+          data: public
+          execution: official_code_adapted
+        adapter: muno21_graph_fuse
+        status: source_audit
+
+  - id: sn7_building_map_update
+    dataset: sn7
+    comparison_scope: adapted
+    priority: important
+    metrics: [macro_f1, update_f1, false_edit_rate, raster_iou, polygon_iou]
+    baselines:
+      - id: concat_unet
+        display_name: Image + Prior Concat U-Net
+        priority: important
+        origin: activemap_internal_control
+        paper_title: ActiveMap image-prior concatenation control
+        venue: ActiveMap protocol
+        publication_year: 2026
+        publication_date: 2026-07
+        paper_url: in_tree
+        kind: in_tree_training
+        source_url: in_tree
+        source_commit: in_tree
+        license_status: project
+        adapter: sn7_raster_prior
+        status: validation_complete
+      - id: fc_siam_diff
+        display_name: FC-Siam-Diff
+        priority: optional
+        origin: published_method_adapted_to_image_map
+        paper_title: Fully Convolutional Siamese Networks for Change Detection
+        venue: ICIP
+        publication_year: 2018
+        publication_date: 2018-10
+        paper_url: https://arxiv.org/abs/1810.08462
+        kind: external_training
+        source_url: https://github.com/rcdaudt/fully_convolutional_change_detection
+        source_commit: null
+        license_status: review_required
+        adapter: sn7_raster_prior
+        status: source_audit
+      - id: bit_cd
+        display_name: BIT
+        priority: optional
+        origin: published_method_adapted_to_image_map
+        paper_title: Remote Sensing Image Change Detection With Transformers
+        venue: IEEE Transactions on Geoscience and Remote Sensing
+        publication_year: 2022
+        publication_date: 2021-07-20
+        paper_url: https://doi.org/10.1109/TGRS.2021.3095166
+        kind: external_training
+        source_url: https://github.com/justchenhao/BIT_CD
+        source_commit: null
+        license_status: review_required
+        adapter: sn7_raster_prior
+        status: source_audit
+      - id: changeformer
+        display_name: ChangeFormer
+        priority: important
+        origin: published_method_adapted_to_image_map
+        paper_title: A Transformer-Based Siamese Network for Change Detection
+        venue: IGARSS
+        publication_year: 2022
+        publication_date: 2022-07
+        paper_url: https://doi.org/10.1109/IGARSS46834.2022.9883686
+        kind: external_training
+        source_url: https://github.com/wgcban/ChangeFormer
+        source_commit: null
+        license_status: research_only_review
+        adapter: sn7_raster_prior
+        status: source_audit
+      - id: bce_net_style
+        display_name: BCE-Net-style
+        priority: important
+        origin: published_method_clean_room_adaptation
+        paper_title: Reliable Building Footprints Change Extraction Based on Historical Map and Up-to-Date Images Using Contrastive Learning
+        venue: ISPRS Journal of Photogrammetry and Remote Sensing
+        publication_year: 2023
+        publication_date: 2023-07
+        paper_url: https://doi.org/10.1016/j.isprsjprs.2023.05.011
+        kind: clean_room_reimplementation
+        source_url: https://arxiv.org/abs/2304.07076
+        source_commit: paper_specification
+        license_status: clean_room
+        adapter: sn7_raster_prior
+        status: implementation_pending
+      - id: change_mamba
+        display_name: ChangeMamba
+        priority: important
+        origin: published_method_adapted_to_image_map
+        paper_title: Remote Sensing Change Detection With Spatiotemporal State Space Model
+        venue: IEEE Transactions on Geoscience and Remote Sensing
+        publication_year: 2024
+        publication_date: 2024-07
+        paper_url: https://doi.org/10.1109/TGRS.2024.3417253
+        kind: external_training
+        source_url: https://github.com/ChenHongruixuan/ChangeMamba
+        source_commit: 9ce9cec13f9ea14bc0ad91f071577ec9b3a97983
+        license_status: apache-2.0
+        reproducibility:
+          code: official_public
+          weights: public
+          data: public
+          execution: official_code_adapted
+        adapter: sn7_raster_prior
+        status: validation_complete
+      - id: ban_opencd
+        display_name: BAN (Open-CD)
+        priority: important
+        origin: official_toolbox_implementation
+        paper_title: A New Learning Paradigm for Foundation Model-Based Remote-Sensing Change Detection
+        venue: IEEE Transactions on Geoscience and Remote Sensing
+        publication_year: 2024
+        publication_date: 2024-02
+        paper_url: https://doi.org/10.1109/TGRS.2024.3365825
+        kind: official_code_adapted
+        source_url: https://github.com/likyoo/open-cd
+        source_commit: 790a1972b538baaaffd4c3022a4d9afaa3f861e5
+        license_status: apache-2.0
+        reproducibility:
+          code: public
+          weights: public
+          data: public
+          execution: source_locked_adapter_three_seed_validation_complete
+        adapter: sn7_raster_prior
+        status: validation_complete
+      - id: banet_image_map
+        display_name: BANet-style
+        priority: optional
+        origin: published_image_map_method
+        paper_title: A Bilateral Attention Network for Extracting Changed Buildings Between Remote Sensing Imagery and Cadastral Maps
+        venue: International Journal of Applied Earth Observation and Geoinformation
+        publication_year: 2025
+        publication_date: 2025-05
+        paper_url: https://doi.org/10.1016/j.jag.2025.104486
+        kind: clean_room_reimplementation
+        source_url: https://doi.org/10.1016/j.jag.2025.104486
+        source_commit: paper_specification
+        license_status: clean_room
+        reproducibility:
+          code: not_found
+          weights: not_found
+          data: unclear
+          execution: clean_room_reimplementation
+        adapter: sn7_raster_prior
+        status: implementation_pending
+      - id: mtf_bfe
+        display_name: MTF-BFE-style
+        priority: important
+        origin: published_image_map_method
+        paper_title: A Multi-Task Learning Framework for Building Footprint Extraction by Fusing Historical Cadastral Maps With Up-to-Date Remote Sensing Images
+        venue: Information Fusion
+        publication_year: 2026
+        publication_date: 2026-05-06
+        paper_url: https://doi.org/10.1016/j.inffus.2026.104458
+        kind: clean_room_reimplementation
+        source_url: https://doi.org/10.1016/j.inffus.2026.104458
+        source_commit: paper_specification
+        license_status: clean_room
+        reproducibility:
+          code: not_found
+          weights: not_found
+          data: unclear
+          execution: clean_room_reimplementation
+        adapter: sn7_raster_prior
+        status: implementation_pending
+
+  - id: structured_hd_map_update
+    dataset: argotweak
+    comparison_scope: adapted
+    priority: important
+    metrics:
+      [atomic_edit_f1, unchanged_preservation, false_edit_rate, geometry_chamfer, topology_score]
+    benchmark_reference:
+      title: "ArgoTweak: Towards Self-Updating HD Maps through Structured Priors"
+      venue: ICCV
+      publication_year: 2025
+      publication_date: 2025-10
+      paper_url: https://openaccess.thecvf.com/content/ICCV2025/papers/Wild_ArgoTweak_Towards_Self-Updating_HD_Maps_through_Structured_Priors_ICCV_2025_paper.pdf
+    baselines:
+      - id: argotweak_explainable
+        display_name: ArgoTweak Explainable
+        priority: critical
+        origin: official_structured_prior_baseline
+        paper_title: "ArgoTweak: Towards Self-Updating HD Maps through Structured Priors"
+        venue: ICCV
+        publication_year: 2025
+        publication_date: 2025-10
+        paper_url: https://openaccess.thecvf.com/content/ICCV2025/papers/Wild_ArgoTweak_Towards_Self-Updating_HD_Maps_through_Structured_Priors_ICCV_2025_paper.pdf
+        kind: external_training
+        source_url: https://github.com/KTH-RPL/ArgoTweak_baselines
+        source_commit: 016f7cfc3d7d21b533a828d6636a3ae86a1ed415
+        license_status: cc-by-nc-sa-4.0
+        reproducibility:
+          code: official_public_source_locked
+          weights: official_public_sha256_verified_on_local_and_hdpi
+          data: balanced_24_train_8_val_tbv_complete_test_locked
+          execution: official_checkpoint_inference_and_atomic_proposal_export_complete
+        adapter: structured_vector_map
+        pilot_metrics:
+          scope: single_validation_log_smoke_not_for_paper_comparison
+          frames: 57
+          lane_segment_ap: 0.3944253921508789
+          pedestrian_crossing_ap: 0.0
+          map_element_map: 0.19721269607543945
+        status: balanced_subset_proposals_ready_controller_pending
+      - id: maptrv2
+        display_name: MapTRv2
+        priority: critical
+        origin: published_vector_map_backend
+        paper_title: "MapTRv2: An End-to-End Framework for Online Vectorized HD Map Construction"
+        venue: International Journal of Computer Vision
+        publication_year: 2025
+        publication_date: 2025-03
+        paper_url: https://arxiv.org/abs/2308.05736
+        kind: external_training
+        source_url: https://github.com/hustvl/MapTR
+        source_commit: a6872d8d9670bde17b4b01560f1221f88b443d55
+        license_status: apache-2.0
+        reproducibility:
+          code: official_public_source_locked
+          weights: not_required_for_training
+          data: nuscenes_missing
+          execution: source_locked_data_pending
+        adapter: structured_vector_map
+        status: source_audit
+      - id: hrmapnet
+        display_name: HRMapNet
+        priority: important
+        origin: published_prior_map_backend
+        paper_title: Enhancing Vectorized Map Perception with Historical Rasterized Maps
+        venue: ECCV
+        publication_year: 2024
+        publication_date: 2024-09
+        paper_url: https://arxiv.org/abs/2409.00620
+        kind: external_training
+        source_url: https://github.com/HXMap/HRMapNet
+        source_commit: null
+        license_status: review_required
+        adapter: structured_vector_map
+        status: source_audit
+      - id: interaction_map
+        display_name: InteractionMap
+        priority: optional
+        origin: published_vector_map_backend
+        paper_title: Improving Online Vectorized HDMap Construction with Interaction
+        venue: CVPR
+        publication_year: 2025
+        publication_date: 2025-06
+        paper_url: https://openaccess.thecvf.com/content/CVPR2025/papers/Wu_InteractionMap_Improving_Online_Vectorized_HDMap_Construction_with_Interaction_CVPR_2025_paper.pdf
+        kind: external_training
+        source_url: https://kuangwu.github.io/interactionmap/
+        source_commit: null
+        license_status: review_required
+        adapter: structured_vector_map
+        status: source_audit
+      - id: rtmap
+        display_name: RTMap
+        priority: important
+        origin: published_recursive_map_update_method
+        paper_title: "RTMap: Real-Time Recursive Mapping with Change Detection and Localization"
+        venue: ICCV
+        publication_year: 2025
+        publication_date: 2025-10
+        paper_url: https://openaccess.thecvf.com/content/ICCV2025/papers/Du_RTMap_Real-Time_Recursive_Mapping_with_Change_Detection_and_Localization_ICCV_2025_paper.pdf
+        kind: external_training
+        source_url: https://github.com/CN-ADLab/RTMap
+        source_commit: null
+        license_status: review_required
+        adapter: structured_vector_map
+        status: source_audit
+      - id: optimvmap
+        display_name: OptiMVMap
+        priority: important
+        origin: published_multi_vehicle_map_backend
+        paper_title: "OptiMVMap: Offline Vectorized Map Construction via Optimal Multi-vehicle Perspectives"
+        venue: CVPR
+        publication_year: 2026
+        publication_date: 2026-06
+        paper_url: https://openaccess.thecvf.com/content/CVPR2026/html/Dan_OptiMVMap_Offline_Vectorized_Map_Construction_via_Optimal_Multi-vehicle_Perspectives_CVPR_2026_paper.html
+        kind: external_training
+        source_url: https://github.com/DanZeDong/OptiMVMap
+        source_commit: null
+        license_status: review_required
+        adapter: structured_vector_map
+        status: source_audit
+
+  - id: agent_control_protocols
+    dataset: muno21
+    comparison_scope: protocol
+    priority: critical
+    metrics: [mean_quality_cost_utility, quality_cost_auc, false_edit_rate, mean_cost]
+    baselines:
+      - id: always_stop
+        display_name: Always STOP
+        priority: critical
+        origin: activemap_internal_control
+        paper_title: ActiveMap no-acquisition control
+        venue: ActiveMap protocol
+        publication_year: 2026
+        publication_date: 2026-07
+        paper_url: in_tree
+        kind: in_tree_evaluation
+        source_url: in_tree
+        source_commit: in_tree
+        license_status: project
+        adapter: policy_rollout
+        validation_evidence: artifacts/paper_evidence/muno21_baseline_matrix_hdpi_v3/table.json
+        status: validation_complete
+      - id: random_acquisition
+        display_name: Random acquisition
+        priority: important
+        origin: activemap_internal_control
+        paper_title: ActiveMap random-acquisition control
+        venue: ActiveMap protocol
+        publication_year: 2026
+        publication_date: 2026-07
+        paper_url: in_tree
+        kind: in_tree_evaluation
+        source_url: in_tree
+        source_commit: in_tree
+        license_status: project
+        adapter: policy_rollout
+        validation_evidence: artifacts/paper_evidence/muno21_baseline_matrix_hdpi_v3/table.json
+        status: validation_complete
+      - id: acquire_all
+        display_name: Acquire-all
+        priority: critical
+        origin: activemap_internal_control
+        paper_title: ActiveMap forced-acquisition control
+        venue: ActiveMap protocol
+        publication_year: 2026
+        publication_date: 2026-07
+        paper_url: in_tree
+        kind: in_tree_evaluation
+        source_url: in_tree
+        source_commit: in_tree
+        license_status: project
+        adapter: policy_rollout
+        validation_evidence: artifacts/paper_evidence/muno21_baseline_matrix_hdpi_v3/table.json
+        status: validation_complete
+      - id: greedy_utility
+        display_name: Greedy utility
+        priority: critical
+        origin: activemap_internal_control
+        paper_title: ActiveMap one-step greedy utility control
+        venue: ActiveMap protocol
+        publication_year: 2026
+        publication_date: 2026-07
+        paper_url: in_tree
+        kind: in_tree_evaluation
+        source_url: in_tree
+        source_commit: in_tree
+        license_status: project
+        adapter: policy_rollout
+        validation_evidence: artifacts/paper_evidence/muno21_baseline_matrix_hdpi_v3/table.json
+        status: validation_complete
+      - id: generic_selector
+        display_name: Generic learned selector
+        priority: critical
+        origin: activemap_internal_control
+        paper_title: ActiveMap generic learned-selector control
+        venue: ActiveMap protocol
+        publication_year: 2026
+        publication_date: 2026-07
+        paper_url: in_tree
+        kind: in_tree_training
+        source_url: in_tree
+        source_commit: in_tree
+        license_status: project
+        adapter: policy_rollout
+        validation_evidence: artifacts/paper_evidence/muno21_baseline_matrix_hdpi_v3/table.json
+        status: validation_complete
+      - id: edit_conditioned_selector
+        display_name: Edit-conditioned selector
+        priority: critical
+        origin: activemap_method
+        paper_title: ActiveMap edit-conditioned selector
+        venue: ActiveMap protocol
+        publication_year: 2026
+        publication_date: 2026-07
+        paper_url: in_tree
+        kind: in_tree_training
+        source_url: in_tree
+        source_commit: in_tree
+        license_status: project
+        adapter: policy_rollout
+        validation_evidence: artifacts/paper_evidence/muno21_baseline_matrix_hdpi_v3/table.json
+        status: validation_complete
+      - id: direct_vlm
+        display_name: Direct VLM
+        priority: critical
+        origin: activemap_internal_control
+        paper_title: ActiveMap direct-VLM control
+        venue: ActiveMap protocol
+        publication_year: 2026
+        publication_date: 2026-07
+        paper_url: in_tree
+        kind: in_tree_evaluation
+        source_url: in_tree
+        source_commit: in_tree
+        license_status: project
+        adapter: structured_vlm_rollout
+        validation_evidence: artifacts/paper_evidence/muno21_direct_vlm_supervised_3seed_v1/COMPLETE.json
+        status: validation_complete
+      - id: react_vlm
+        display_name: ReAct-style VLM
+        priority: important
+        origin: published_agent_protocol_adapted_to_map_update
+        paper_title: "ReAct: Synergizing Reasoning and Acting in Language Models"
+        venue: ICLR
+        publication_year: 2023
+        publication_date: 2023-05
+        paper_url: https://arxiv.org/abs/2210.03629
+        kind: clean_room_reimplementation
+        source_url: https://arxiv.org/abs/2210.03629
+        source_commit: paper_specification
+        license_status: clean_room
+        adapter: structured_vlm_rollout
+        status: implementation_ready
+      - id: active_map_agent
+        display_name: ActiveMap Agent
+        priority: critical
+        origin: activemap_method
+        paper_title: ActiveMap structured recurrent tool-to-belief Agent
+        venue: ActiveMap protocol
+        publication_year: 2026
+        publication_date: 2026-07
+        paper_url: in_tree
+        kind: in_tree_training
+        source_url: in_tree
+        source_commit: in_tree
+        license_status: project
+        adapter: policy_rollout
+        validation_evidence: artifacts/paper_evidence/sn7_extended_protocol_matrix_20260801/audit.json
+        status: validation_complete
+      - id: oracle
+        display_name: Offline oracle upper bound
+        priority: important
+        origin: activemap_internal_upper_bound
+        paper_title: ActiveMap offline counterfactual oracle
+        venue: ActiveMap protocol
+        publication_year: 2026
+        publication_date: 2026-07
+        paper_url: in_tree
+        kind: in_tree_evaluation
+        source_url: in_tree
+        source_commit: in_tree
+        license_status: project
+        adapter: policy_rollout
+        validation_evidence: artifacts/paper_evidence/muno21_baseline_matrix_hdpi_v3/table.json
+        status: validation_complete
+      - id: thinkgeo_style
+        display_name: ThinkGeo-style Agent
+        priority: important
+        origin: published_remote_sensing_agent_protocol
+        paper_title: "ThinkGeo: Evaluating Tool-Augmented Agents for Remote Sensing Tasks"
+        venue: CVPR Workshops (MONTI)
+        publication_year: 2026
+        publication_date: 2026-06
+        paper_url: https://arxiv.org/abs/2505.23752
+        kind: external_evaluation
+        source_url: https://github.com/mbzuai-oryx/ThinkGeo
+        source_commit: c8108de440db9920d02b9de3f91dffb457c8afd4
+        license_status: apache-2.0
+        reproducibility:
+          code: official_public
+          weights: not_applicable
+          data: public
+          execution: protocol_reimplementation
+        adapter: structured_vlm_rollout
+        status: implementation_pending
+      - id: geommagent_style
+        display_name: GeoMMAgent-style
+        priority: critical
+        origin: published_remote_sensing_agent_protocol
+        paper_title: "GeoMMBench and GeoMMAgent: Toward Expert-Level Multimodal Intelligence in Geoscience and Remote Sensing"
+        venue: CVPR
+        publication_year: 2026
+        publication_date: 2026-06
+        paper_url: https://openaccess.thecvf.com/content/CVPR2026/papers/Xiao_GeoMMBench_and_GeoMMAgent_Toward_Expert-Level_Multimodal_Intelligence_in_Geoscience_and_CVPR_2026_paper.pdf
+        kind: clean_room_reimplementation
+        source_url: https://geo-mm-agi.github.io
+        source_commit: paper_specification
+        license_status: clean_room
+        reproducibility:
+          code: not_found
+          weights: not_applicable
+          data: public
+          execution: protocol_reimplementation
+        adapter: structured_vlm_rollout
+        validation_evidence: artifacts/paper_evidence/sn7_extended_protocol_matrix_20260801/audit.json
+        status: validation_complete
+      - id: sensesearch_style
+        display_name: SenseSearch-style
+        priority: critical
+        origin: published_high_resolution_agent_protocol
+        paper_title: "SenseSearch: Empowering Vision-Language Models With High-Resolution Agentic Search-Reasoning via Reinforcement Learning"
+        venue: CVPR
+        publication_year: 2026
+        publication_date: 2026-06
+        paper_url: https://openaccess.thecvf.com/content/CVPR2026/html/Chng_SenseSearch_Empowering_Vision-Language_Models_with_High-Resolution_Agentic_Search-Reasoning_via_Reinforcement_CVPR_2026_paper.html
+        kind: clean_room_reimplementation
+        source_url: https://github.com/OpenSenseNova/SenseNova-MARS
+        source_commit: ce052d7efe599bf3af0e2db2dcfdbda7d0183704
+        license_status: mit
+        reproducibility:
+          code: official_public
+          weights: public
+          data: public
+          execution: protocol_reimplementation
+        adapter: structured_vlm_rollout
+        validation_evidence: artifacts/paper_evidence/sn7_extended_protocol_matrix_20260801/audit.json
+        status: validation_complete

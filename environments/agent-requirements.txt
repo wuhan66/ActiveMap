@@ -1,0 +1,7 @@
+# Install into a dedicated environment; do not mutate the GIS/updater environment.
+peft>=0.17,<1
+tensorboard>=2.18,<3
+# Required only by scripts/train_agent_dpo.py. Keep preference optimization in
+# the isolated Agent environment rather than the GIS/updater environment.
+trl>=1.6,<2
+datasets>=5,<6

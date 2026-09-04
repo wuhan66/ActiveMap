@@ -1,0 +1,958 @@
+schema_version: activemap-paper-registry-v1
+paper_target: CVPR/ICLR
+working_title: "ActiveMap: Active Evidence Acquisition for Safe Editable Map Updating"
+claim_evidence_protocol: configs/experiments/claim_evidence_protocol_v2.yaml
+interpretation: >-
+  This v1 file is the execution/artifact registry. Its required paired comparisons
+  are preregistered hypotheses, not supported manuscript claims. Claim status and
+  the final method are governed by claim_evidence_protocol_v2.yaml.
+title_if_agent_passes: "ActiveMap: Active Evidence Acquisition for Safe Editable Map Updating"
+title_fallback: "ActiveMap: Active Evidence Acquisition for Safe Editable Map Updating"
+
+current_outcome_overrides:
+  sn7_tools_vs_no_tools: failed_promotion
+  sn7_recurrent_vs_identity_belief: failed_promotion
+  sn7_final_candidate: active_residual_no_tools_plus_safe_commit
+  sn7_final_candidate_status: direct_three_seed_evaluation_pending
+
+protocol:
+  train_seeds: [20260716, 20260719, 20260722]
+  test_policy: frozen_once
+  test_requires_qc_approval: true
+  checkpoint_source: validation_only
+  threshold_source: validation_only
+  bootstrap_unit: task_or_aoi
+  bootstrap_replicates: 1000
+  bootstrap_seed: 20260715
+  confidence_level: 0.95
+  sn7_safe_commit_frozen_matrix:
+    seeds: [20260725, 20260726, 20260727]
+    folds: 5
+    l2: 0.01
+    threshold_grid_points: 101
+    threshold_selection_uses_test: false
+    bootstrap_replicates: 5000
+    bootstrap_seed: 20260727
+    variants:
+      - changemamba_to_changemamba_source_oof
+      - ban_to_ban_source_oof
+      - changemamba_to_ban_source_oof
+      - changemamba_to_ban_all_target_train
+      - ban_to_changemamba_source_oof
+      - ban_to_changemamba_all_target_train
+  primary_budget:
+    sn7: 4.0
+    muno21: 3.0
+  muno21_budgets: [1.5, 3.0, 4.5]
+  safety_gates:
+    max_false_edit_rate: 0.05
+    min_schema_valid_rate: 0.99
+    min_executable_valid_rate: 0.99
+    max_fallback_rate: 0.01
+    min_grounded_tool_recall: 0.05
+    require_nonnegative_quality_cost_auc_delta: true
+    require_writeback_replay_consistency: true
+  paired_comparison_margins:
+    min_primary_utility_delta: 0.0
+    min_quality_cost_auc_delta: 0.0
+    max_false_edit_rate_delta: 0.01
+    max_mean_cost_delta_for_matched_cost: 0.0
+
+required_paired_comparisons:
+  - id: sn7_onpolicy_round1_vs_contextual_rl
+    claim: "Recurrently executed on-policy preference optimization improves over its matched contextual-RL reference."
+    baseline_experiment: sn7_active_catalog_contextual_rl_seed1
+    candidate_experiment: sn7_active_catalog_onpolicy_round1
+    test_policy: validation_only
+    required_gates: [quality_cost_safety_non_dominated]
+  - id: sn7_contextual_rl_vs_sft
+    claim: "Validation-gated contextual policy optimization improves recurrent executable map updating over SFT."
+    baseline_experiment: sn7_active_catalog_closed_loop_qwen
+    candidate_experiment: sn7_active_catalog_contextual_rl_seed1
+    test_policy: validation_only
+    required_gates: [quality_cost_safety_non_dominated]
+  - id: sn7_recurrent_vs_react
+    claim: "Belief-conditioned recurrent control improves over direct ReAct under matched tools, budget, backbone, and writeback."
+    baseline_experiment: sn7_modern_controller_protocols
+    baseline_variant: react
+    candidate_experiment: sn7_modern_controller_protocols
+    candidate_variant: recurrent_sft
+    test_policy: validation_only
+    required_gates: [quality_cost_safety_non_dominated, matched_cost]
+  - id: sn7_recurrent_vs_plan_execute
+    claim: "Closed-loop belief-conditioned replanning improves over an initially frozen evidence plan."
+    baseline_experiment: sn7_modern_controller_protocols
+    baseline_variant: plan_execute
+    candidate_experiment: sn7_modern_controller_protocols
+    candidate_variant: recurrent_sft
+    test_policy: validation_only
+    required_gates: [quality_cost_safety_non_dominated, matched_cost]
+  - id: sn7_risk_gated_vs_unconditional_carry
+    claim: "Outcome-free risk gating reduces chronological error propagation relative to unconditional persistent edits."
+    baseline_experiment: sn7_chronological_map_maintenance
+    baseline_variant: unconditional_carry
+    candidate_experiment: sn7_chronological_map_maintenance
+    candidate_variant: risk_gated_carry
+    test_policy: validation_only
+    required_gates: [quality_cost_safety_non_dominated]
+  - id: sn7_selective_tool_writeback_vs_no_tool
+    claim: "Selective grounded tools improve executable map quality beyond the no-tool Agent."
+    baseline_experiment: sn7_active_catalog_selective_tool_writeback
+    baseline_variant: no_tool
+    candidate_experiment: sn7_active_catalog_selective_tool_writeback
+    test_policy: validation_only
+    required_gates: [quality_cost_safety_non_dominated]
+  - id: sn7_selective_tool_writeback_vs_forced
+    claim: "Selective grounded tools improve executable map quality beyond forced tool use."
+    baseline_experiment: sn7_active_catalog_selective_tool_writeback
+    baseline_variant: forced_tools
+    candidate_experiment: sn7_active_catalog_selective_tool_writeback
+    test_policy: validation_only
+    required_gates: [quality_cost_safety_non_dominated, matched_cost]
+  - id: sn7_selective_tools_vs_no_tools
+    claim: "Selective grounded tool use improves over the no-tool recurrent Agent."
+    baseline_experiment: sn7_active_catalog_closed_loop_qwen
+    candidate_experiment: sn7_active_catalog_selective_tool_agent
+    test_policy: validation_only
+    required_gates: [quality_cost_safety_non_dominated, matched_cost]
+  - id: sn7_selective_tools_vs_forced_tools
+    claim: "Risk-aware sparse tool calling improves over forced tool invocation."
+    baseline_experiment: sn7_active_catalog_forced_tool_agent
+    candidate_experiment: sn7_active_catalog_selective_tool_agent
+    test_policy: validation_only
+    required_gates: [quality_cost_safety_non_dominated, matched_cost]
+  - id: sn7_active_catalog_qwen_vs_uncertainty_gate
+    claim: "Recurrent visual evidence acquisition improves over an uncertainty-gated policy."
+    baseline_experiment: sn7_active_catalog_heuristic_suite
+    baseline_variant: uncertainty_gate
+    candidate_experiment: sn7_active_catalog_closed_loop_qwen
+    test_policy: frozen_once
+    required_gates: [quality_cost_safety_non_dominated, matched_cost]
+  - id: sn7_active_catalog_qwen_vs_always_stop
+    claim: "Active acquisition improves executable map updates beyond the direct policy."
+    baseline_experiment: sn7_active_catalog_heuristic_suite
+    baseline_variant: always_stop
+    candidate_experiment: sn7_active_catalog_closed_loop_qwen
+    test_policy: frozen_once
+    required_gates: [quality_cost_safety_non_dominated]
+  - id: sn7_active_catalog_writeback_vs_uncertainty_gate
+    claim: "Agent-selected evidence improves committed editable-vector map quality."
+    baseline_experiment: sn7_active_catalog_heuristic_suite
+    baseline_variant: uncertainty_gate
+    candidate_experiment: sn7_active_catalog_executable_writeback
+    test_policy: frozen_once
+    required_gates: [quality_cost_safety_non_dominated, matched_cost]
+  - id: edit_conditioning_vs_generic
+    claim: "Edit-conditioned selection improves the quality-cost-safety frontier."
+    baseline_experiment: generic_selector
+    candidate_experiment: edit_conditioned_selector
+    test_policy: frozen_once
+    required_gates: [quality_cost_safety_non_dominated]
+  - id: agent_vs_edit_conditioned
+    claim: "Structured Agent control improves over the strongest learned selector."
+    baseline_experiment: edit_conditioned_selector
+    candidate_experiment: agent_tool_to_belief
+    test_policy: frozen_once
+    required_gates: [quality_cost_safety_non_dominated]
+  - id: recurrent_agent_vs_no_tools
+    claim: "Selective grounded tool use adds value beyond the no-tool Agent."
+    baseline_experiment: agent_without_tools
+    candidate_experiment: agent_tool_to_belief
+    test_policy: frozen_once
+    required_gates: [quality_cost_safety_non_dominated]
+  - id: sparse_agent_vs_forced_tools
+    claim: "Learning when not to call tools dominates forced tool invocation."
+    baseline_experiment: agent_forced_tools
+    candidate_experiment: agent_tool_to_belief
+    test_policy: frozen_once
+    required_gates: [quality_cost_safety_non_dominated, matched_cost]
+  - id: recurrent_agent_vs_no_belief
+    claim: "Recurrent tool-to-belief updates improve closed-loop decisions."
+    baseline_experiment: agent_without_recurrent_belief
+    candidate_experiment: agent_tool_to_belief
+    test_policy: frozen_once
+    required_gates: [quality_cost_safety_non_dominated]
+  - id: reliability_gated_vs_ungated_belief
+    claim: "Evidence-conditioned reliability gating improves Tool-Belief safety without sacrificing update quality."
+    baseline_experiment: sn7_active_catalog_forced_tool_belief
+    candidate_experiment: sn7_active_catalog_reliability_gated_tool_belief
+    test_policy: validation_only
+    required_gates: [quality_cost_safety_non_dominated]
+  - id: agent_vs_random
+    claim: "The Agent dominates deterministic random acquisition."
+    baseline_experiment: heuristic_policy_suite
+    baseline_variant: random
+    candidate_experiment: agent_tool_to_belief
+    test_policy: frozen_once
+    required_gates: [quality_cost_safety_non_dominated]
+  - id: agent_vs_cheapest
+    claim: "The Agent dominates cheapest-first acquisition."
+    baseline_experiment: heuristic_policy_suite
+    baseline_variant: cheapest
+    candidate_experiment: agent_tool_to_belief
+    test_policy: frozen_once
+    required_gates: [quality_cost_safety_non_dominated]
+  - id: agent_vs_quality_first
+    claim: "The Agent dominates quality-first acquisition."
+    baseline_experiment: heuristic_policy_suite
+    baseline_variant: quality_first
+    candidate_experiment: agent_tool_to_belief
+    test_policy: frozen_once
+    required_gates: [quality_cost_safety_non_dominated]
+  - id: agent_vs_uncertainty
+    claim: "The Agent dominates uncertainty-first acquisition."
+    baseline_experiment: heuristic_policy_suite
+    baseline_variant: uncertainty
+    candidate_experiment: agent_tool_to_belief
+    test_policy: frozen_once
+    required_gates: [quality_cost_safety_non_dominated]
+  - id: agent_vs_mapex
+    claim: "The Agent dominates a MapEx-style information-gain policy."
+    baseline_experiment: heuristic_policy_suite
+    baseline_variant: mapex
+    candidate_experiment: agent_tool_to_belief
+    test_policy: frozen_once
+    required_gates: [quality_cost_safety_non_dominated]
+  - id: agent_vs_greedy_utility
+    claim: "The Agent dominates a risk-aware greedy utility policy."
+    baseline_experiment: heuristic_policy_suite
+    baseline_variant: greedy_utility
+    candidate_experiment: agent_tool_to_belief
+    test_policy: frozen_once
+    required_gates: [quality_cost_safety_non_dominated]
+
+required_ablation_claims:
+  - id: no_prior_vector
+    experiment: sn7_updater_structural_ablations
+    variant: no_prior
+  - id: no_edit_classifier
+    experiment: sn7_updater_structural_ablations
+    variant: no_edit_classifier
+  - id: shared_vs_edit_specific_geometry
+    experiment: sn7_updater_structural_ablations
+    variant: edit_specific_geometry
+    reference: sn7_updater_scratch
+  - id: changemamba_safe_commit
+    experiment: sn7_changemamba_commit_policy
+    variant: safe_commit
+  - id: no_confidence_gate
+    experiment: sn7_updater_no_confidence_gate
+  - id: no_inria_pretraining
+    experiment: sn7_updater_scratch
+    reference: inria_to_sn7_transfer
+  - id: no_reliability_gate
+    experiment: sn7_active_catalog_reliability_gated_tool_belief
+    reference: sn7_active_catalog_forced_tool_belief
+  - id: no_stopping
+    experiment: selector_without_stopping
+  - id: no_agent_tool_loop
+    experiment: agent_without_tools
+
+required_artifacts:
+  - id: external_baseline_matrix_ready
+    stage: external_baselines
+    path: "${STORAGE_ROOT}/paper/external_baselines/readiness.json"
+    kind: json_gate
+    field: ready_for_frozen_test
+    equals: true
+  - id: cross_dataset_protocol_audit
+    stage: evaluation
+    path: "${STORAGE_ROOT}/paper/cross_dataset/protocol_audit.json"
+    kind: json_gate
+    field: passed
+    equals: true
+  - id: sn7_audit
+    stage: updater
+    path: "${STORAGE_ROOT}/processed/sn7_v1/updater_v4_cap20/audit.json"
+    kind: json_gate
+    field: passed
+    equals: true
+  - id: muno21_audit
+    stage: updater
+    path: "${STORAGE_ROOT}/processed/muno21_v2/updater/audit.json"
+    kind: json_gate
+    field: passed
+    equals: true
+  - id: inria_audit
+    stage: updater
+    path: "${STORAGE_ROOT}/processed/inria_v1/segmentation/audit.json"
+    kind: json_gate
+    field: passed
+    equals: true
+  - id: manual_qc_approval
+    stage: updater
+    path: "${STORAGE_ROOT}/logs/dataset_preparation/QC_APPROVED.json"
+    kind: json_gate
+    field: approved
+    equals: true
+  - id: sparse_tool_sft_seed20260821
+    stage: agent
+    path: "${STORAGE_ROOT}/runs/agent/muno21_qwen3_4b_sparse_tool_sft_seed20260821/evaluation/selection/promoted_adapter.json"
+    kind: json_gate
+    field: approved
+    equals: true
+  - id: sparse_tool_sft_seed20260822
+    stage: agent
+    path: "${STORAGE_ROOT}/runs/agent/muno21_qwen3_4b_sparse_tool_sft_seed20260822/evaluation/selection/promoted_adapter.json"
+    kind: json_gate
+    field: approved
+    equals: true
+  - id: sparse_tool_sft_seed20260823
+    stage: agent
+    path: "${STORAGE_ROOT}/runs/agent/muno21_qwen3_4b_sparse_tool_sft_seed20260823/evaluation/selection/promoted_adapter.json"
+    kind: json_gate
+    field: approved
+    equals: true
+  - id: tool_belief_checkpoint
+    stage: agent
+    path: "${STORAGE_ROOT}/runs/agent/tool_belief_anchored_v4_seed20260821/best.pt"
+    kind: file
+  - id: rl_train_states
+    stage: rl
+    path: "${STORAGE_ROOT}/processed/muno21_v2/agent/agent_rl_states_v2_grounded_tools/train.jsonl"
+    kind: file
+  - id: rl_val_states
+    stage: rl
+    path: "${STORAGE_ROOT}/processed/muno21_v2/agent/agent_rl_states_v2_grounded_tools/val.jsonl"
+    kind: file
+  - id: rl_readiness
+    stage: rl
+    path: "${STORAGE_ROOT}/runs/agent/muno21_qwen3_4b_sparse_tool_sft_seed20260821/evaluation/selection/rl_readiness_decision.json"
+    kind: json_gate
+    field: ready_for_single_seed_rl
+    equals: true
+  - id: graph_eval_readiness
+    stage: writeback
+    path: "${STORAGE_ROOT}/artifacts/graph_eval/readiness.json"
+    kind: json_gate
+    field: ready
+    equals: true
+  - id: sn7_active_catalog_sft_audit
+    stage: selector
+    path: "${STORAGE_ROOT}/processed/sn7_v1/agent/sequential_selector_v1/full/active_catalog_sft_v4/audit.json"
+    kind: json_gate
+    field: passed
+    equals: true
+  - id: sn7_active_catalog_token_audit
+    stage: selector
+    path: "${STORAGE_ROOT}/runs/sn7_active_catalog/token_audit/full_qwen3vl4b.json"
+    kind: json_gate
+    field: passed
+    equals: true
+  - id: sn7_active_catalog_three_seed_aggregate
+    stage: selector
+    path: "${STORAGE_ROOT}/runs/sn7_active_catalog/qwen3vl4b_promoted_three_seed/active_catalog_aoi_bootstrap.json"
+    kind: file
+  - id: sn7_active_catalog_closed_loop_promotion
+    stage: agent
+    path: "${STORAGE_ROOT}/runs/sn7_active_catalog/closed_loop_writeback_qwen/promotion_uncertainty_gate.json"
+    kind: json_gate
+    field: promote
+    equals: true
+  - id: sn7_active_catalog_writeback_summary
+    stage: writeback
+    path: "${STORAGE_ROOT}/runs/sn7_active_catalog/closed_loop_writeback_qwen/evaluation/summary.json"
+    kind: file
+  - id: sn7_active_catalog_joint_transition_audit
+    stage: agent
+    path: "${STORAGE_ROOT}/runs/sn7_active_catalog/joint_transition_audit_seed1.json"
+    kind: json_gate
+    field: passed
+    equals: true
+  - id: sn7_active_catalog_grounded_tool_audit
+    stage: agent
+    path: "${STORAGE_ROOT}/runs/sn7_active_catalog/joint_grounded_tools/audit.json"
+    kind: json_gate
+    field: passed
+    equals: true
+  - id: sn7_active_catalog_tool_belief_promotion
+    stage: agent
+    path: "${STORAGE_ROOT}/runs/sn7_active_catalog/joint_tool_belief_seed1/summary.json"
+    kind: json_gate
+    field: promotion_passed
+    equals: true
+  - id: sn7_reliability_gate_component_promotion
+    stage: agent
+    path: "${STORAGE_ROOT}/runs/sn7_active_catalog/reliability_gate_three_seed/component_ablation.json"
+    kind: json_gate
+    field: promotion_passed
+    equals: true
+  - id: sn7_reliability_gate_closed_loop_promotion
+    stage: agent
+    path: "${STORAGE_ROOT}/runs/sn7_active_catalog/reliability_gate_three_seed/promotion.json"
+    kind: json_gate
+    field: promotion_passed
+    equals: true
+  - id: sn7_active_catalog_selective_tool_gate_promotion
+    stage: agent
+    path: "${STORAGE_ROOT}/runs/sn7_active_catalog/joint_tool_gate_seed1/summary.json"
+    kind: json_gate
+    field: promotion_gate.passed
+    equals: true
+  - id: sn7_active_catalog_tool_branch_comparison
+    stage: agent
+    path: "${STORAGE_ROOT}/runs/sn7_active_catalog/closed_loop_selective_tools_seed1/paired_tool_branches.json"
+    kind: file
+  - id: sn7_active_catalog_tool_branch_promotion
+    stage: agent
+    path: "${STORAGE_ROOT}/runs/sn7_active_catalog/closed_loop_selective_tools_seed1/promotion.json"
+    kind: json_gate
+    field: promote
+    equals: true
+  - id: sn7_active_catalog_tool_writeback_promotion
+    stage: writeback
+    path: "${STORAGE_ROOT}/runs/sn7_active_catalog/closed_loop_writeback_selective_tools/promotion.json"
+    kind: json_gate
+    field: promote
+    equals: true
+  - id: sn7_active_catalog_tool_branch_three_seed_promotion
+    stage: agent
+    path: "${STORAGE_ROOT}/runs/sn7_active_catalog/tool_branch_three_seed/promotion.json"
+    kind: json_gate
+    field: promote
+    equals: true
+  - id: sn7_active_catalog_tool_writeback_three_seed_promotion
+    stage: writeback
+    path: "${STORAGE_ROOT}/runs/sn7_active_catalog/tool_writeback_three_seed/promotion.json"
+    kind: json_gate
+    field: promote
+    equals: true
+  - id: sn7_active_catalog_rl_readiness
+    stage: rl
+    path: "${STORAGE_ROOT}/runs/sn7_active_catalog/active_catalog_rl_readiness.json"
+    kind: json_gate
+    field: ready_for_single_seed_rl
+    equals: true
+  - id: sn7_active_catalog_rl_promotion
+    stage: rl
+    path: "${STORAGE_ROOT}/runs/sn7_active_catalog/closed_loop_writeback_rl_seed1/promotion.json"
+    kind: json_gate
+    field: promote
+    equals: true
+  - id: sn7_active_catalog_onpolicy_preferences
+    stage: rl
+    path: "${STORAGE_ROOT}/runs/sn7_active_catalog/onpolicy_round1/preferences/train.jsonl.summary.json"
+    kind: json_gate
+    field: actions_executed_in_recurrent_environment
+    equals: true
+  - id: sn7_active_catalog_onpolicy_promotion
+    stage: rl
+    path: "${STORAGE_ROOT}/runs/sn7_active_catalog/onpolicy_round1/promotion.json"
+    kind: json_gate
+    field: promote
+    equals: true
+  - id: sn7_safe_commit_test_manifest
+    stage: updater
+    path: "${STORAGE_ROOT}/processed/sn7_v1/updater_v4_cap20/updater_samples.jsonl"
+    kind: file
+  - id: sn7_changemamba_seed20260725_checkpoint
+    stage: updater
+    path: "${STORAGE_ROOT}/runs/external_baselines/sn7/change_mamba/full_weight5_seed20260725_v1/best.pt"
+    kind: file
+  - id: sn7_changemamba_seed20260726_checkpoint
+    stage: updater
+    path: "${STORAGE_ROOT}/runs/external_baselines/sn7/change_mamba/full_weight5_seed20260726_v1/best.pt"
+    kind: file
+  - id: sn7_changemamba_seed20260727_checkpoint
+    stage: updater
+    path: "${STORAGE_ROOT}/runs/external_baselines/sn7/change_mamba/full_weight5_seed20260727_v1/best.pt"
+    kind: file
+  - id: sn7_ban_seed20260725_checkpoint
+    stage: updater
+    path: "${STORAGE_ROOT}/runs/external_baselines/sn7/open_cd_ban/full_weight5_seed20260725_v1/best.pt"
+    kind: file
+  - id: sn7_ban_seed20260726_checkpoint
+    stage: updater
+    path: "${STORAGE_ROOT}/runs/external_baselines/sn7/open_cd_ban/full_weight5_seed20260726_v1/best.pt"
+    kind: file
+  - id: sn7_ban_seed20260727_checkpoint
+    stage: updater
+    path: "${STORAGE_ROOT}/runs/external_baselines/sn7/open_cd_ban/full_weight5_seed20260727_v1/best.pt"
+    kind: file
+  - id: sn7_changemamba_seed20260725_train_predictions
+    stage: updater
+    path: "${STORAGE_ROOT}/runs/external_baselines/sn7/change_mamba/full_weight5_seed20260725_v1/train_audit/per_sample.jsonl"
+    kind: file
+  - id: sn7_changemamba_seed20260726_train_predictions
+    stage: updater
+    path: "${STORAGE_ROOT}/runs/external_baselines/sn7/change_mamba/full_weight5_seed20260726_v1/train_audit/per_sample.jsonl"
+    kind: file
+  - id: sn7_changemamba_seed20260727_train_predictions
+    stage: updater
+    path: "${STORAGE_ROOT}/runs/external_baselines/sn7/change_mamba/full_weight5_seed20260727_v1/train_audit/per_sample.jsonl"
+    kind: file
+  - id: sn7_ban_seed20260725_train_predictions
+    stage: updater
+    path: "${STORAGE_ROOT}/runs/external_baselines/sn7/open_cd_ban/full_weight5_seed20260725_v1/train_audit/per_sample.jsonl"
+    kind: file
+  - id: sn7_ban_seed20260726_train_predictions
+    stage: updater
+    path: "${STORAGE_ROOT}/runs/external_baselines/sn7/open_cd_ban/full_weight5_seed20260726_v1/train_audit/per_sample.jsonl"
+    kind: file
+  - id: sn7_ban_seed20260727_train_predictions
+    stage: updater
+    path: "${STORAGE_ROOT}/runs/external_baselines/sn7/open_cd_ban/full_weight5_seed20260727_v1/train_audit/per_sample.jsonl"
+    kind: file
+
+experiments:
+  - id: sn7_external_update_baselines
+    family: updater
+    dataset: sn7
+    role: diagnostic_perception_robustness
+    trainable: true
+    seeds: [20260716, 20260719, 20260722]
+    methods: [concat_unet]
+    config: configs/experiments/external_baselines.yaml
+    required_metrics: [macro_f1, update_f1, false_edit_rate, raster_iou, polygon_iou]
+    primary_metrics: [macro_f1, false_edit_rate, polygon_iou]
+    requires: [sn7_audit, manual_qc_approval]
+    test_policy: frozen_once
+  - id: sn7_changemamba_baseline
+    family: updater
+    dataset: sn7
+    role: diagnostic_perception_robustness
+    trainable: true
+    seeds: [20260725, 20260726, 20260727]
+    seed_semantics: upstream_model_training
+    methods: [change_mamba]
+    config: configs/experiments/external_baselines.yaml
+    required_metrics: [macro_f1, update_f1, false_edit_rate, missed_edit_rate, raster_iou]
+    primary_metrics: [macro_f1, false_edit_rate, raster_iou]
+    requires: [sn7_audit, manual_qc_approval]
+    test_policy: frozen_once
+  - id: sn7_changemamba_commit_policy
+    family: updater
+    dataset: sn7
+    role: component_replaceability_ablation
+    trainable: true
+    seeds: [20260725, 20260726, 20260727]
+    seed_semantics: upstream_model_training
+    methods:
+      - always_commit
+      - safe_commit
+      - changemamba_to_changemamba_source_oof
+      - ban_to_ban_source_oof
+      - changemamba_to_ban_source_oof
+      - changemamba_to_ban_all_target_train
+      - ban_to_changemamba_source_oof
+      - ban_to_changemamba_all_target_train
+    depends_on: [sn7_changemamba_baseline]
+    config: configs/experiments/external_baselines.yaml
+    required_metrics: [macro_f1, update_f1, false_edit_rate, missed_edit_rate, raster_iou]
+    primary_metrics: [macro_f1, false_edit_rate, raster_iou]
+    requires:
+      - sn7_audit
+      - manual_qc_approval
+      - sn7_safe_commit_test_manifest
+      - sn7_changemamba_seed20260725_checkpoint
+      - sn7_changemamba_seed20260726_checkpoint
+      - sn7_changemamba_seed20260727_checkpoint
+      - sn7_ban_seed20260725_checkpoint
+      - sn7_ban_seed20260726_checkpoint
+      - sn7_ban_seed20260727_checkpoint
+      - sn7_changemamba_seed20260725_train_predictions
+      - sn7_changemamba_seed20260726_train_predictions
+      - sn7_changemamba_seed20260727_train_predictions
+      - sn7_ban_seed20260725_train_predictions
+      - sn7_ban_seed20260726_train_predictions
+      - sn7_ban_seed20260727_train_predictions
+    test_policy: frozen_once
+  - id: muno21_external_map_update_baselines
+    family: writeback
+    dataset: muno21
+    role: diagnostic_perception_robustness
+    trainable: true
+    seeds: [20260821, 20260822, 20260823]
+    seed_semantics: upstream_model_training
+    methods: [muno21_prune_spurious, sam_road]
+    config: configs/experiments/external_baselines.yaml
+    required_metrics: [apls_improvement, pixel_f1_improvement, no_change_error_rate]
+    primary_metrics: [apls_improvement, no_change_error_rate]
+    requires: [muno21_audit, manual_qc_approval, graph_eval_readiness]
+    test_policy: frozen_once
+  - id: external_agent_protocol_baselines
+    family: agent
+    dataset: muno21
+    role: external_baseline
+    trainable: false
+    seeds: [20260821, 20260822, 20260823]
+    seed_semantics: model_training
+    methods: [direct_vlm, react_vlm, thinkgeo_style, geommagent_style, sensesearch_style]
+    config: configs/experiments/external_baselines.yaml
+    required_metrics: [mean_quality_cost_utility, false_edit_rate, mean_cost, quality_cost_auc, schema_valid_rate, executable_valid_rate]
+    primary_metrics: [mean_quality_cost_utility, false_edit_rate, mean_cost]
+    requires: [muno21_audit, manual_qc_approval, external_baseline_matrix_ready]
+    test_policy: frozen_once
+  - id: sn7_updater_scratch
+    family: updater
+    dataset: sn7
+    role: primary
+    trainable: true
+    seeds: [20260716, 20260719, 20260722]
+    config: configs/updater/sn7_v4_hierarchical_vector_change_scratch_server.yaml
+    requires: [sn7_audit, manual_qc_approval]
+    test_policy: frozen_once
+  - id: sn7_flat_edit_head
+    family: updater
+    dataset: sn7
+    role: ablation
+    trainable: true
+    seeds: [20260716, 20260719, 20260722]
+    config: configs/updater/sn7_v4_cap20_aug_server.yaml
+    requires: [sn7_audit, manual_qc_approval]
+    test_policy: validation_only
+  - id: sn7_updater_structural_ablations
+    family: updater
+    dataset: sn7
+    role: ablation
+    trainable: true
+    seeds: [20260716, 20260719, 20260722]
+    methods: [no_prior, no_edit_classifier, edit_specific_geometry]
+    config: configs/experiments/sn7_updater_paper_ablations.yaml
+    requires: [sn7_audit, manual_qc_approval]
+    test_policy: validation_only
+  - id: sn7_updater_no_confidence_gate
+    family: updater
+    dataset: sn7
+    role: decision_ablation
+    trainable: false
+    seeds: [20260716, 20260719, 20260722]
+    depends_on: [sn7_updater_scratch]
+    evaluation_overrides:
+      commit_policy: always_commit
+      commit_threshold: 0.0
+    requires: [sn7_audit, manual_qc_approval]
+    test_policy: validation_only
+  - id: inria_boundary_pretrain
+    family: updater
+    dataset: inria
+    role: boundary_pretraining
+    trainable: true
+    seeds: [20260721]
+    config: configs/updater/inria_pretrain_server.yaml
+    required_metrics: [raster_iou, foreground_iou, empty_scene_false_positive_fraction]
+    primary_metrics: [raster_iou]
+    requires: [inria_audit, manual_qc_approval]
+    test_policy: frozen_once
+  - id: inria_to_sn7_transfer
+    family: updater
+    dataset: sn7
+    role: transfer_ablation
+    trainable: true
+    seeds: [20260722]
+    config: configs/updater/sn7_from_inria_server.yaml
+    requires: [sn7_audit, inria_audit, manual_qc_approval]
+    test_policy: validation_only
+  - id: muno21_updater_scratch
+    family: updater
+    dataset: muno21
+    role: primary
+    trainable: true
+    seeds: [20260731, 20260801, 20260802]
+    config: configs/updater/muno21_road_v7_topology_scratch_server.yaml
+    requires: [muno21_audit, manual_qc_approval]
+    test_policy: frozen_once
+  - id: generic_selector
+    family: selector
+    dataset: muno21
+    role: strong_baseline
+    trainable: true
+    seeds: [20260821, 20260822, 20260823]
+    source_training_seeds: [20260811, 20260812, 20260813]
+    analysis_seed_pairing: by_index_with_agent_training_seed
+    config: configs/experiments/muno21_selector_paper_ablations.yaml
+    matrix_variant: generic
+    requires: [muno21_audit, manual_qc_approval]
+    test_policy: frozen_once
+  - id: edit_conditioned_selector
+    family: selector
+    dataset: muno21
+    role: structured_baseline
+    trainable: true
+    seeds: [20260821, 20260822, 20260823]
+    source_training_seeds: [20260811, 20260812, 20260813]
+    analysis_seed_pairing: by_index_with_agent_training_seed
+    config: configs/experiments/muno21_selector_paper_ablations.yaml
+    matrix_variant: full
+    requires: [muno21_audit, manual_qc_approval]
+    test_policy: frozen_once
+  - id: selector_without_stopping
+    family: selector
+    dataset: muno21
+    role: ablation
+    trainable: true
+    seeds: [20260821, 20260822, 20260823]
+    config: configs/experiments/muno21_selector_paper_ablations.yaml
+    requires: [muno21_audit, manual_qc_approval]
+    test_policy: validation_only
+  - id: heuristic_policy_suite
+    family: selector
+    dataset: muno21
+    role: baseline
+    trainable: false
+    methods: [random, cheapest, quality_first, uncertainty, mapex, greedy_utility]
+    requires: [muno21_audit, manual_qc_approval]
+    test_policy: frozen_once
+  - id: agent_without_tools
+    family: agent
+    dataset: muno21
+    role: ablation
+    trainable: false
+    seeds: [20260821, 20260822, 20260823]
+    seed_semantics: model_training
+    requires: [sparse_tool_sft_seed20260821, sparse_tool_sft_seed20260822, sparse_tool_sft_seed20260823, manual_qc_approval]
+    test_policy: frozen_once
+  - id: agent_forced_tools
+    family: agent
+    dataset: muno21
+    role: ablation
+    trainable: false
+    seeds: [20260821, 20260822, 20260823]
+    seed_semantics: model_training
+    requires: [sparse_tool_sft_seed20260821, sparse_tool_sft_seed20260822, sparse_tool_sft_seed20260823, tool_belief_checkpoint, manual_qc_approval]
+    test_policy: frozen_once
+  - id: agent_without_recurrent_belief
+    family: agent
+    dataset: muno21
+    role: ablation
+    trainable: false
+    seeds: [20260821, 20260822, 20260823]
+    seed_semantics: model_training
+    requires: [sparse_tool_sft_seed20260821, sparse_tool_sft_seed20260822, sparse_tool_sft_seed20260823, manual_qc_approval]
+    test_policy: frozen_once
+  - id: agent_tool_to_belief
+    family: agent
+    dataset: muno21
+    role: primary
+    trainable: false
+    seeds: [20260821, 20260822, 20260823]
+    seed_semantics: model_training
+    requires: [sparse_tool_sft_seed20260821, sparse_tool_sft_seed20260822, sparse_tool_sft_seed20260823, tool_belief_checkpoint, manual_qc_approval]
+    test_policy: frozen_once
+  - id: contextual_grpo_single_seed
+    family: rl
+    dataset: muno21
+    role: gated_intervention
+    trainable: true
+    seeds: [20260821]
+    requires: [sparse_tool_sft_seed20260821, rl_train_states, rl_val_states, rl_readiness, manual_qc_approval]
+    test_policy: validation_only
+  - id: executable_vector_writeback
+    family: writeback
+    dataset: muno21
+    role: primary_evaluation
+    trainable: false
+    seeds: [20260821, 20260822, 20260823]
+    seed_semantics: upstream_model_training
+    methods: [generic_selector, edit_conditioned_selector, agent_tool_to_belief]
+    depends_on: [generic_selector, edit_conditioned_selector, agent_tool_to_belief]
+    requires: [muno21_audit, manual_qc_approval, graph_eval_readiness]
+    test_policy: frozen_once
+  - id: sn7_active_catalog_qwen_sft
+    family: selector
+    dataset: sn7
+    role: primary
+    trainable: true
+    seeds: [20260717, 20260718, 20260719]
+    config: configs/experiments/sn7_active_catalog_selector_v1.yaml
+    required_metrics: [realized_utility_mean, selection_macro_f1, exact_evidence_recall, mean_regret, false_call_rate, harmful_call_rate_all_states, mean_cost_per_state]
+    primary_metrics: [realized_utility_mean, false_call_rate, mean_cost_per_state]
+    requires: [sn7_audit, manual_qc_approval, sn7_active_catalog_sft_audit, sn7_active_catalog_token_audit, sn7_active_catalog_three_seed_aggregate]
+    test_policy: frozen_once
+  - id: sn7_active_catalog_heuristic_suite
+    family: selector
+    dataset: sn7
+    role: baseline
+    trainable: false
+    methods: [always_stop, cheapest, clear_per_cost, uncertainty_gate, random, shortlist_oracle_upper_bound]
+    required_metrics: [terminal_accuracy, false_edit_rate, missed_edit_rate, mean_cost, mean_quality_gain, mean_quality_cost_utility]
+    primary_metrics: [terminal_accuracy, false_edit_rate, mean_quality_cost_utility]
+    requires: [sn7_audit, manual_qc_approval, sn7_active_catalog_sft_audit]
+    test_policy: frozen_once
+  - id: sn7_active_catalog_closed_loop_qwen
+    family: agent
+    dataset: sn7
+    role: recurrent_evidence_acquisition
+    trainable: false
+    seeds: [20260717, 20260718, 20260719]
+    seed_semantics: model_training
+    depends_on: [sn7_active_catalog_qwen_sft, sn7_active_catalog_heuristic_suite]
+    required_metrics: [terminal_accuracy, false_edit_rate, missed_edit_rate, mean_cost, mean_quality_gain, mean_quality_cost_utility, valid_action_rate, fallback_episode_rate]
+    primary_metrics: [terminal_accuracy, false_edit_rate, mean_quality_cost_utility]
+    requires: [sn7_audit, manual_qc_approval, sn7_active_catalog_three_seed_aggregate, sn7_active_catalog_closed_loop_promotion]
+    test_policy: frozen_once
+  - id: sn7_active_catalog_executable_writeback
+    family: writeback
+    dataset: sn7
+    role: primary_evaluation
+    trainable: false
+    seeds: [20260717, 20260718, 20260719]
+    seed_semantics: upstream_model_training
+    methods: [qwen_active_catalog, strongest_non_oracle_baseline]
+    depends_on: [sn7_active_catalog_closed_loop_qwen]
+    required_metrics: [raster_iou, raster_iou_gain, added_polygon_iou, removed_polygon_iou, vector_replay_iou, component_count_absolute_error, vector_delta_topology_valid]
+    primary_metrics: [raster_iou_gain, vector_replay_iou, vector_delta_topology_valid]
+    requires: [sn7_audit, manual_qc_approval, sn7_active_catalog_closed_loop_promotion, sn7_active_catalog_writeback_summary]
+    test_policy: frozen_once
+  - id: sn7_active_catalog_no_tool_recurrent_transitions
+    family: agent
+    dataset: sn7
+    role: no_tool_recurrent_data_ablation
+    trainable: false
+    seeds: [20260717, 20260718, 20260719]
+    seed_semantics: model_training
+    depends_on: [sn7_active_catalog_closed_loop_qwen]
+    required_metrics: [belief_change_rate, belief_probability_l1_mean]
+    primary_metrics: [belief_change_rate]
+    requires: [sn7_audit, manual_qc_approval, sn7_active_catalog_joint_transition_audit]
+    test_policy: validation_only
+  - id: sn7_active_catalog_forced_tool_belief
+    family: agent
+    dataset: sn7
+    role: forced_tool_component
+    trainable: true
+    seeds: [20260717, 20260718, 20260719]
+    seed_semantics: model_training
+    config: configs/experiments/sn7_active_catalog_selector_v1.yaml
+    depends_on: [sn7_active_catalog_no_tool_recurrent_transitions]
+    required_metrics: [full_macro_f1, zero_tool_macro_f1, full_false_edit_rate]
+    primary_metrics: [full_macro_f1, full_false_edit_rate]
+    requires: [sn7_audit, manual_qc_approval, sn7_active_catalog_grounded_tool_audit, sn7_active_catalog_tool_belief_promotion]
+    test_policy: validation_only
+  - id: sn7_active_catalog_reliability_gated_tool_belief
+    family: agent
+    dataset: sn7
+    role: ablation
+    trainable: true
+    seeds: [20260717, 20260718, 20260719]
+    seed_semantics: model_training
+    config: configs/experiments/sn7_active_catalog_selector_v1.yaml
+    depends_on: [sn7_active_catalog_no_tool_recurrent_transitions]
+    controlled_baseline: sn7_active_catalog_forced_tool_belief
+    controlled_difference: reliability_gate
+    required_metrics: [full_macro_f1, full_false_edit_rate, full_expected_calibration_error, full_reliability_gate_mean, full_reliability_gate_p10, full_reliability_gate_p90]
+    primary_metrics: [full_macro_f1, full_false_edit_rate, full_expected_calibration_error]
+    requires: [sn7_audit, manual_qc_approval, sn7_active_catalog_grounded_tool_audit, sn7_reliability_gate_component_promotion, sn7_reliability_gate_closed_loop_promotion]
+    test_policy: validation_only
+  - id: sn7_active_catalog_selective_tool_gate
+    family: agent
+    dataset: sn7
+    role: selective_tool_component
+    trainable: true
+    seeds: [20260717, 20260718, 20260719]
+    seed_semantics: model_training
+    config: configs/experiments/sn7_active_catalog_selector_v1.yaml
+    depends_on: [sn7_active_catalog_forced_tool_belief]
+    required_metrics: [proxy_utility_mean, proxy_risk_mean, call_rate, precision, recall]
+    primary_metrics: [proxy_utility_mean, proxy_risk_mean, call_rate]
+    requires: [sn7_audit, manual_qc_approval, sn7_active_catalog_tool_belief_promotion, sn7_active_catalog_selective_tool_gate_promotion]
+    test_policy: validation_only
+  - id: sn7_active_catalog_forced_tool_agent
+    family: agent
+    dataset: sn7
+    role: forced_tool_recurrent_ablation
+    trainable: false
+    seeds: [20260717, 20260718, 20260719]
+    seed_semantics: model_training
+    depends_on: [sn7_active_catalog_closed_loop_qwen, sn7_active_catalog_forced_tool_belief]
+    required_metrics: [mean_quality_cost_utility, false_edit_rate, mean_cost, mean_tool_calls, mean_tool_belief_l1_delta]
+    primary_metrics: [mean_quality_cost_utility, false_edit_rate]
+    requires: [sn7_active_catalog_tool_belief_promotion, sn7_active_catalog_tool_branch_comparison, sn7_active_catalog_tool_branch_three_seed_promotion]
+    test_policy: validation_only
+  - id: sn7_active_catalog_selective_tool_agent
+    family: agent
+    dataset: sn7
+    role: selective_tool_recurrent_candidate
+    trainable: false
+    seeds: [20260717, 20260718, 20260719]
+    seed_semantics: model_training
+    depends_on: [sn7_active_catalog_closed_loop_qwen, sn7_active_catalog_selective_tool_gate]
+    required_metrics: [mean_quality_cost_utility, false_edit_rate, mean_cost, mean_tool_calls, mean_tool_belief_l1_delta]
+    primary_metrics: [mean_quality_cost_utility, false_edit_rate]
+    requires: [sn7_active_catalog_tool_belief_promotion, sn7_active_catalog_selective_tool_gate_promotion, sn7_active_catalog_tool_branch_comparison, sn7_active_catalog_tool_branch_promotion, sn7_active_catalog_tool_branch_three_seed_promotion]
+    test_policy: validation_only
+  - id: sn7_active_catalog_selective_tool_writeback
+    family: writeback
+    dataset: sn7
+    role: selective_tool_executable_map_evaluation
+    trainable: false
+    seeds: [20260717, 20260718, 20260719]
+    seed_semantics: upstream_model_training
+    methods: [selective_tools, no_tool, forced_tools]
+    depends_on: [sn7_active_catalog_selective_tool_agent, sn7_active_catalog_forced_tool_agent]
+    required_metrics: [raster_iou_gain, vector_replay_iou, vector_delta_topology_valid]
+    primary_metrics: [raster_iou_gain, vector_replay_iou]
+    requires: [sn7_active_catalog_tool_branch_promotion, sn7_active_catalog_tool_writeback_promotion, sn7_active_catalog_tool_branch_three_seed_promotion, sn7_active_catalog_tool_writeback_three_seed_promotion]
+    test_policy: validation_only
+  - id: sn7_active_catalog_contextual_rl_seed1
+    family: rl
+    dataset: sn7
+    role: gated_intervention
+    trainable: true
+    seeds: [20260717]
+    config: configs/experiments/sn7_active_catalog_contextual_rl_v1.yaml
+    depends_on: [sn7_active_catalog_qwen_sft, sn7_active_catalog_selective_tool_writeback]
+    required_metrics: [mean_quality_cost_utility, false_edit_rate, mean_cost, raster_iou_gain, vector_replay_iou]
+    primary_metrics: [mean_quality_cost_utility, false_edit_rate, raster_iou_gain]
+    requires: [sn7_active_catalog_rl_readiness, sn7_active_catalog_rl_promotion]
+    test_policy: validation_only
+  - id: sn7_active_catalog_onpolicy_round1
+    family: rl
+    dataset: sn7
+    role: gated_intervention
+    trainable: true
+    seeds: [20260717]
+    config: configs/experiments/sn7_active_catalog_onpolicy_v1.yaml
+    depends_on: [sn7_active_catalog_contextual_rl_seed1, sn7_active_catalog_selective_tool_agent]
+    required_metrics: [mean_quality_cost_utility, false_edit_rate, mean_cost, mean_tool_calls, raster_iou_gain, vector_replay_iou]
+    primary_metrics: [mean_quality_cost_utility, false_edit_rate, raster_iou_gain]
+    requires: [sn7_active_catalog_rl_promotion, sn7_active_catalog_onpolicy_preferences, sn7_active_catalog_onpolicy_promotion]
+    test_policy: validation_only
+  - id: sn7_modern_controller_protocols
+    family: agent
+    dataset: sn7
+    role: matched_protocol_baseline
+    trainable: false
+    seeds: [20260718]
+    methods: [direct_sft, react, plan_execute, recurrent_sft]
+    depends_on: [sn7_active_catalog_closed_loop_qwen]
+    required_metrics: [terminal_accuracy, false_edit_rate, missed_edit_rate, mean_cost, mean_quality_gain, mean_quality_cost_utility, raster_iou_gain, vector_replay_iou]
+    primary_metrics: [mean_quality_cost_utility, false_edit_rate, raster_iou_gain]
+    requires: [sn7_audit, manual_qc_approval, sn7_active_catalog_closed_loop_promotion, sn7_active_catalog_writeback_summary]
+    test_policy: validation_only
+  - id: sn7_chronological_map_maintenance
+    family: writeback
+    dataset: sn7
+    role: continual_state_evaluation
+    trainable: false
+    seeds: [20260717, 20260718, 20260719]
+    seed_semantics: upstream_model_training
+    methods: [independent_reset, unconditional_carry, risk_gated_carry]
+    depends_on: [sn7_active_catalog_selective_tool_writeback]
+    required_metrics: [mean_independent_iou, mean_carry_iou, mean_risk_gated_iou, final_risk_gated_iou, carry_error_propagation, risk_gated_error_propagation, intervention_count]
+    primary_metrics: [mean_risk_gated_iou, risk_gated_error_propagation, intervention_count]
+    requires: [sn7_audit, manual_qc_approval, sn7_active_catalog_tool_writeback_three_seed_promotion]
+    test_policy: validation_only
+
+required_metrics:
+  updater: [macro_f1, update_f1, false_edit_rate, missed_edit_rate, raster_iou, polygon_iou, calibration_ece]
+  selector: [mean_quality_cost_utility, regret, mean_cost, terminal_accuracy, false_edit_rate]
+  agent: [mean_quality_cost_utility, false_edit_rate, schema_valid_rate, executable_valid_rate, grounded_tool_recall, belief_action_flip_rate]
+  writeback: [final_map_iou, change_polygon_iou, topology_valid_rate, replay_consistency, apls_improvement, pixel_f1_improvement, no_change_error_rate]
+
+primary_metrics:
+  updater: [macro_f1, false_edit_rate, polygon_iou]
+  selector: [mean_quality_cost_utility, false_edit_rate]
+  agent: [mean_quality_cost_utility, false_edit_rate]
+  rl: [mean_quality_cost_utility, false_edit_rate]
+  writeback: [final_map_iou, apls_improvement, no_change_error_rate]
+
+curve_metrics:
+  selector: [quality_cost_auc]
+  agent: [quality_cost_auc]
+  rl: [quality_cost_auc]
+
+curve_primary_metrics:
+  selector: [quality_cost_auc]
+  agent: [quality_cost_auc]
+  rl: [quality_cost_auc]

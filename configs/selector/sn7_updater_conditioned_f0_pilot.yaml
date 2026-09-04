@@ -1,0 +1,38 @@
+seed: 20260809
+
+data:
+  samples: /home/wh/ActiveMap/runs/paper_evidence/sn7_updater_conditioned_matrix_v3/selector_data/f0/selector_data.jsonl
+
+model:
+  hidden_dim: 128
+  dropout: 0.10
+
+training:
+  device: cuda:0
+  epochs: 40
+  patience: 8
+  batch_size: 128
+  num_workers: 8
+  learning_rate: 0.0003
+  weight_decay: 0.0001
+  regret_loss_weight: 0.25
+  listwise_loss_weight: 0.50
+  utility_temperature: 0.25
+  stop_loss_weight: 0.25
+  grad_clip: 1.0
+  resume: false
+
+monitoring:
+  tensorboard: true
+  pause_poll_seconds: 10
+
+ablation:
+  name: updater_conditioned_f0_pilot
+  condition_on_hypothesis: true
+  drop_hypothesis_groups: []
+  drop_evidence_groups: []
+  drop_state_groups: []
+  false_edit_penalty: true
+  allow_stop: true
+
+output_dir: /home/wh/ActiveMap/runs/paper_evidence/sn7_updater_conditioned_matrix_v3/selectors/f0_pilot

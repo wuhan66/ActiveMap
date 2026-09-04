@@ -1,0 +1,77 @@
+seed: 20260711
+
+data:
+  samples: /mnt/mydisk/wh/ActiveMap/processed/sn7_v1/updater_v4_cap20/updater_samples.jsonl
+  edit_sampling_weights:
+    KEEP: 1.0
+    ADD: 0.75
+    DELETE: 3.0
+    RESHAPE: 1.25
+
+model:
+  image_channels: 3
+  prior_channels: 1
+  base_channels: 32
+  geometry_dim: 8
+  edit_classes: 4
+  dropout: 0.10
+  use_prior: true
+
+training:
+  device: auto
+  max_epochs: 30
+  min_epochs: 8
+  batch_size: 16
+  num_workers: 4
+  learning_rate: 0.00005
+  weight_decay: 0.0001
+  grad_clip: 1.0
+  amp: true
+  resume: true
+  init_checkpoint: /mnt/mydisk/wh/ActiveMap/runs/updater/v4_cap20_aug_seed20260710/best_quality.pt
+  init_scope: full
+  quality_delete_recall_weight: 0.5
+  checkpoint_every: 2
+  augmentation:
+    enabled: true
+    horizontal_flip_probability: 0.5
+    vertical_flip_probability: 0.5
+    rotate90_probability: 0.5
+    brightness: 0.08
+    contrast: 0.10
+    gaussian_noise: 0.01
+  early_stopping:
+    patience: 8
+    min_delta: 0.0001
+  scheduler:
+    factor: 0.5
+    patience: 2
+    threshold: 0.0001
+    min_lr: 0.000001
+
+monitoring:
+  tensorboard: true
+  progress_bar: true
+  visualize_every: 1
+  visualization_samples: 8
+  pause_poll_seconds: 10
+
+loss:
+  segmentation: 1.0
+  segmentation_bce: 1.0
+  segmentation_dice: 1.0
+  segmentation_focal: 0.25
+  focal_gamma: 2.0
+  focal_alpha: 0.75
+  edit: 1.0
+  edit_class_weights: auto
+  edit_class_weight_power: 0.25
+  edit_label_smoothing: 0.02
+  geometry: 0.5
+  geometry_beta: 0.1
+  false_edit: 0.75
+  missed_edit: 0.75
+  confidence: 0.2
+
+output_dir: /mnt/mydisk/wh/ActiveMap/runs/updater/v4_delete_recall_seed20260711
+archive_dir: /home/wh/projects/activemap-v1/outputs/updater/v4_delete_recall_seed20260711

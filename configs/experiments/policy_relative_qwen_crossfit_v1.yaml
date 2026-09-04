@@ -1,0 +1,192 @@
+schema_version: activemap-policy-relative-crossfit-v1
+experiment_id: qwen3_vl_4b_policy_relative_crossfit_v1
+declared_date: 2026-07-17
+status: pretool_gate_family_rejected_sequential_controller_next
+test_assets_read: false
+
+hypothesis: >-
+  Evidence acquisition targets must be recomputed relative to the current direct policy;
+  frozen pre-policy labels incur measurable acquisition regret as the direct editor improves.
+
+model:
+  backbone: Qwen3-VL-4B-Instruct
+  path: /home/wh/hf_models/Qwen3-VL-4B-Instruct
+  seed: 20260716
+  visual_tower_lora: false
+  language_lora:
+    rank: 16
+    alpha: 32
+    dropout: 0.05
+
+data:
+  balanced_sft:
+    path: /home/wh/ActiveMap/processed/muno21_v2/agent/semantic_vlm_sft_consensus_v1/train/sft_balanced_toolx3.jsonl
+    records: 3330
+    sha256: 8d932bb3455149e1829a1490a86f58b18dde0d200f8eeaf696b4f33a3a53374a
+  base_sft:
+    path: /home/wh/ActiveMap/processed/muno21_v2/agent/semantic_vlm_sft_consensus_v1/train/sft.jsonl
+    records: 2806
+    sha256: 30c7bbfc95930f98bce1d9ca453eff9dd5002059ca51c6a8e428c1d9a64dc910
+  train_rollout:
+    path: /home/wh/ActiveMap/processed/muno21_v2/agent/semantic_vlm_rollout_consensus_v1/train/rollout.jsonl
+    pairs: 2544
+    tasks: 848
+    sha256: 4c5a49c7ec0eb1ed26eba4de6a40f0fdbc30b9a125447c6bc903ba8fa4d359e3
+  validation_rollout:
+    path: /home/wh/ActiveMap/processed/muno21_v2/agent/semantic_vlm_rollout_consensus_v1/val/rollout.jsonl
+    pairs: 414
+    tasks: 138
+    sha256: 0952f2fbb7dc5bfb1855379e1d0719c6a6de22adb498f62fd0d7411905849fcd
+
+crossfit:
+  grouping: task_id
+  outer_folds: 3
+  inner_validation_fraction: 0.10
+  fold_seed: 20260716
+  fold_manifest: /home/wh/ActiveMap/processed/muno21_v2/agent/policy_relative_crossfit_qwen_v1/summary.json
+  fold_manifest_sha256: ea0e13460ab306b58aa4103bf9f6b53addbdee2aecee7122151d9ed661211f42
+  invariant: labeler_adapter_never_trains_or_selects_checkpoint_on_heldout_task
+
+label:
+  direct_fallback: invalid_terminal_preserves_belief
+  post_tool_fallback: invalid_terminal_preserves_belief_and_pays_cost
+  advantage: terminal_reward_post_minus_tool_cost_minus_terminal_reward_direct
+  use_tool: advantage_strictly_greater_than_zero
+  cached_generation: greedy
+  max_new_tokens: 96
+
+sft:
+  epochs_ceiling: 3
+  learning_rate: 0.0001
+  effective_batch_size: 16
+  early_stopping_patience: 3
+  eval_steps: 50
+  checkpoint_metric: eval_loss
+
+gate:
+  primary_representation: crossfit_adapter_PRE_TOOL_last_mean_hidden_state
+  deployment_alignment_ablation: full_adapter_PRE_TOOL_last_mean_hidden_state
+  attempted_heads:
+    - standardized_balanced_logistic_regression
+    - empirical_prior_utility_risk_logistic_regression
+    - ridge_realized_advantage_regression
+  selection: stratified_task_grouped_oof_train_only
+  objective: proxy_utility
+  min_oof_recall: 0.10
+  max_call_rate: 0.50
+
+results:
+  validation_branch_oracle:
+    direct_mean_utility: 0.5048309179
+    policy_relative_oracle_mean_utility: 0.6388888889
+    oracle_gain: 0.1340579710
+    oracle_gain_task_bootstrap_ci95: [0.0857337, 0.1902174]
+    static_acquisition_regret: 0.0917874396
+    label_agreement_static_vs_policy_relative: 0.8937198068
+    positive_jaccard: 0.4883720930
+  strict_crossfit_hidden_space_gate:
+    validation_calls: 0
+    promotion: false
+    diagnosis: fold_specific_hidden_spaces_do_not_transfer_to_full_adapter
+  deployment_hidden_space_gate:
+    validation_calls: 18
+    validation_precision: 0.50
+    validation_recall: 0.1551724138
+    macro_f1_delta: 0.0163092582
+    mean_utility_delta: 0.0018115942
+    utility_delta_task_bootstrap_ci95: [-0.0271739130, 0.0295893720]
+    utility_probability_gt_zero: 0.5545
+    train_oof_proxy_utility_sum: -58.75
+    promotion: false
+  utility_risk_logistic:
+    train_oof_proxy_utility_sum: -37.5
+    promotion: false
+  realized_advantage_ridge:
+    train_oof_proxy_utility_sum: -78.5
+    promotion: false
+
+onpolicy_refresh:
+  rationale: >-
+    Crossfit adapters define advantage under weaker policies than the final deployment adapter;
+    evidence value must be refreshed under the current direct policy.
+  label_source: full_qwen_adapter_direct_and_post_tool_realized_advantage
+  training_only: true
+  validation_reused_without_selection: true
+  output: /home/wh/ActiveMap/runs/agent_eval/qwen3_vl_4b_policy_relative_onpolicy_train_v1
+  shards: 2
+  assigned_gpus: [4, 5]
+  status: complete
+  train_branch_metrics:
+    examples: 2544
+    policy_relative_positive_count: 275
+    positive_jaccard_vs_static: 0.6077844311
+    direct_mean_utility: 0.6332547170
+    policy_relative_oracle_gain: 0.1008254717
+    static_acquisition_regret: 0.0465801887
+    direct_terminal_valid_rate: 1.0
+    post_terminal_valid_rate: 1.0
+
+gate_matrix:
+  onpolicy_linear_full_threshold:
+    train_oof_proxy_utility_sum: 8.0
+    validation_proxy_utility_sum: -6.25
+    promotion: false
+  cross_policy_intersection_linear:
+    train_positive_count: 141
+    train_oof_proxy_utility_sum: -38.25
+    validation_proxy_utility_sum: -3.0
+    promotion: false
+  crossfit_mlp:
+    train_oof_proxy_utility_sum: -43.25
+    validation_proxy_utility_sum: 3.5
+    promotion: false
+  onpolicy_mlp:
+    train_oof_proxy_utility_sum: 2.5
+    validation_proxy_utility_sum: -0.25
+    promotion: false
+  onpolicy_direct_draft_linear:
+    train_oof_proxy_utility_sum: 12.0
+    validation_proxy_utility_sum: -5.5
+    promotion: false
+  crossfit_label_full_draft_linear:
+    train_oof_proxy_utility_sum: -43.25
+    validation_proxy_utility_sum: 4.0
+    promotion: false
+
+next_method:
+  decision_order: DIRECT_DRAFT-SELECT-TOOL-BELIEF_UPDATE-COMMIT_OR_REJECT
+  controller_state:
+    - policy_snapshot_or_strength
+    - direct_draft_and_confidence
+    - prior_and_edit_condition
+    - acquired_evidence_history
+    - cumulative_cost_and_risk
+  training:
+    - component_sft_for_direct_editor_and_selector
+    - on_policy_rollout_refresh
+    - constrained_sequential_optimization
+  reason: >-
+    Evidence opportunity is strongly supported, but no PRE_TOOL-only lightweight gate has both
+    positive grouped-OOF utility and positive frozen-validation utility.
+
+validation:
+  feature_summary_sha256: be9bdd00459f5855dd6b1cd36d5080af7accdc880f907e278a36677dea0bd31b
+  branch_summary_sha256: 527b5d7d12563cdf68a42e1b89d16ab4f75b59fac4b4bc9c4f94878fdb867ba5
+  role: frozen_evaluation_only
+  promotion:
+    macro_f1_not_below_direct: true
+    utility_strictly_above_direct: true
+    false_edit_delta_at_most: 0.02
+    tool_recall_at_least: 0.10
+    call_rate_at_most: 0.50
+
+resources:
+  server: hdpi-sys1
+  max_concurrent_gpus: 2
+  assigned_gpus: [4, 5]
+
+blocked_until_single_seed_promotion:
+  - additional_model_seeds
+  - additional_backbones
+  - reinforcement_learning
+  - frozen_test

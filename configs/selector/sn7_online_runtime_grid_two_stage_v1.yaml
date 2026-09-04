@@ -1,0 +1,68 @@
+seed: 20260831
+
+data:
+  samples: /home/wh/ActiveMap/processed/sn7_v1/agent/step0_selector_runtime_grid_budget3_v1/selector_states_train_val_step0_online_runtime_grid_budget3_v1.jsonl
+
+data_contract:
+  version: online-observable-state-v1
+  state7: fused_belief_confidence
+
+model:
+  hidden_dim: 128
+  dropout: 0.10
+  decision_mode: two_stage
+  candidate_value_head: true
+  candidate_decision_mode: value
+  terminal_gate_mode: value
+
+training:
+  device: cuda:0
+  epochs: 80
+  patience: 16
+  batch_size: 128
+  num_workers: 2
+  learning_rate: 0.0003
+  min_learning_rate: 0.000001
+  scheduler_factor: 0.5
+  scheduler_patience: 4
+  target_sampling_power: 0.5
+  normalize_features: true
+  calibration_fraction: 0.20
+  calibration_group_key: source_episode
+  weight_decay: 0.0001
+  imitation_loss_weight: 1.0
+  regret_loss_weight: 0.50
+  listwise_loss_weight: 0.50
+  utility_regression_weight: 1.0
+  utility_regression_target: stop_delta
+  utility_scale: 5.0
+  utility_temperature: 0.10
+  gate_utility_weight: 0.50
+  stop_loss_weight: 0.0
+  acquire_loss_weight: 1.0
+  calibrate_stop_margin: true
+  calibration_max_false_call_rate: 0.02
+  calibration_max_harmful_call_fraction: 0.20
+  calibration_min_acquire_recall: 0.10
+  checkpoint_metric: mean_chosen_utility
+  checkpoint_min_acquire_recall: 0.01
+  checkpoint_min_mean_utility: 0.000001
+  grad_clip: 1.0
+  resume: false
+  candidate_value_sign_weight: 1.0
+  context_gate_loss_weight: 0.0
+
+monitoring:
+  tensorboard: true
+  pause_poll_seconds: 10
+
+ablation:
+  name: sn7_online_runtime_grid_two_stage_v1
+  condition_on_hypothesis: true
+  drop_hypothesis_groups: []
+  drop_evidence_groups: []
+  drop_state_groups: []
+  false_edit_penalty: true
+  allow_stop: true
+
+output_dir: /home/wh/ActiveMap/runs/selector/sn7_online_runtime_grid_v1_seed20260831

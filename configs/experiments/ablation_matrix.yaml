@@ -1,0 +1,103 @@
+task: selector
+base_config: ../selector/base.yaml
+output_root: ../../outputs/ablations
+seeds: [20260710, 20260711, 20260712]
+reference: full
+
+evaluation:
+  enabled: true
+  # Ablation selection is validation-only. Frozen paper test evaluation uses a
+  # separate audited command after every checkpoint and threshold is fixed.
+  split: val
+  budgets: [1, 2, 4, 8]
+  primary_budget: 4
+
+experiments:
+  - name: full
+    overrides: {}
+
+  - name: generic
+    overrides:
+      ablation:
+        condition_on_hypothesis: false
+
+  - name: no_edit_type
+    overrides:
+      ablation:
+        drop_hypothesis_groups: [edit_type]
+
+  - name: no_prior_geometry
+    overrides:
+      ablation:
+        drop_hypothesis_groups: [prior_geometry]
+
+  - name: no_conflict
+    overrides:
+      ablation:
+        drop_hypothesis_groups: [conflict]
+
+  - name: no_hypothesis_confidence
+    overrides:
+      ablation:
+        drop_hypothesis_groups: [confidence]
+
+  - name: no_time
+    overrides:
+      ablation:
+        drop_evidence_groups: [time]
+
+  - name: no_scale
+    overrides:
+      ablation:
+        drop_evidence_groups: [scale]
+
+  - name: no_quality
+    overrides:
+      ablation:
+        drop_evidence_groups: [quality]
+
+  - name: no_region
+    overrides:
+      ablation:
+        drop_evidence_groups: [region]
+
+  - name: no_uncertainty
+    overrides:
+      ablation:
+        drop_evidence_groups: [uncertainty]
+
+  - name: no_cost
+    overrides:
+      ablation:
+        drop_evidence_groups: [cost]
+
+  - name: no_history
+    overrides:
+      ablation:
+        drop_hypothesis_groups: [history]
+        drop_state_groups: [history]
+
+  - name: no_budget_state
+    overrides:
+      ablation:
+        drop_state_groups: [budget]
+
+  - name: no_belief_state
+    overrides:
+      ablation:
+        drop_state_groups: [belief]
+
+  - name: ce_only
+    overrides:
+      training:
+        utility_loss_weight: 0.0
+
+  - name: no_false_edit_penalty
+    overrides:
+      ablation:
+        false_edit_penalty: false
+
+  - name: no_stop
+    overrides:
+      ablation:
+        allow_stop: false

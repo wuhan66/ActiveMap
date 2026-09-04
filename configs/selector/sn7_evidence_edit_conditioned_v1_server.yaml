@@ -1,0 +1,50 @@
+seed: 20260721
+
+data:
+  samples: /home/wh/ActiveMap/processed/sn7_v1/agent/sequential_selector_v1/selector_states_train_val.jsonl
+
+model:
+  hidden_dim: 128
+  dropout: 0.10
+
+training:
+  device: cuda:0
+  epochs: 80
+  patience: 12
+  batch_size: 128
+  num_workers: 2
+  learning_rate: 0.0003
+  min_learning_rate: 0.000001
+  scheduler_factor: 0.5
+  scheduler_patience: 3
+  target_sampling_power: 1.0
+  weight_decay: 0.0001
+  imitation_loss_weight: 1.0
+  regret_loss_weight: 0.25
+  listwise_loss_weight: 0.50
+  utility_regression_weight: 0.0
+  utility_scale: 1.0
+  utility_temperature: 0.25
+  stop_loss_weight: 0.0
+  acquire_loss_weight: 1.0
+  calibrate_stop_margin: true
+  checkpoint_metric: mean_chosen_utility
+  checkpoint_min_acquire_recall: 0.0
+  checkpoint_min_mean_utility: 0.000001
+  grad_clip: 1.0
+  resume: false
+
+monitoring:
+  tensorboard: true
+  pause_poll_seconds: 10
+
+ablation:
+  name: sn7_edit_conditioned_v1
+  condition_on_hypothesis: true
+  drop_hypothesis_groups: []
+  drop_evidence_groups: []
+  drop_state_groups: []
+  false_edit_penalty: true
+  allow_stop: true
+
+output_dir: /home/wh/ActiveMap/runs/selector/sn7_evidence_edit_conditioned_v1_seed20260721

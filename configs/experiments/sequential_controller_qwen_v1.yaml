@@ -1,0 +1,278 @@
+schema_version: activemap-sequential-controller-qwen-v1
+experiment_id: qwen3_vl_4b_sequential_controller_v1
+declared_date: 2026-07-17
+status: selector_v3_positive_but_underpowered_cross_dataset_expansion
+test_assets_read: false
+
+hypothesis: >-
+  Evidence acquisition must be conditioned on the current policy snapshot and its direct edit
+  draft, then interleaved with executable tool use, belief revision, and a safe terminal decision.
+
+decision_process:
+  order:
+    - DRAFT
+    - SELECT
+    - TOOL
+    - BELIEF_UPDATE
+    - TERMINAL
+  stop_path: [DRAFT, SELECT, TERMINAL]
+  acquire_path: [DRAFT, SELECT, TOOL, BELIEF_UPDATE, TERMINAL]
+  terminal_actions: [COMMIT, REJECT]
+  executable_tool: RASTER_SEGMENT
+  false_edit_risk_limit: 0.02
+
+policy:
+  backbone: Qwen3-VL-4B-Instruct
+  model_path: /home/wh/hf_models/Qwen3-VL-4B-Instruct
+  initialization_adapter: /home/wh/ActiveMap/runs/agent_sft/qwen3_vl_4b_hierarchical_pilot_v2/seed20260716/final
+  initialization_adapter_config_sha256: d98fc4a709b183d18cb7312c96da50de4bc4bd720c2416ad58354eff7abc52e3
+  initialization_adapter_weights_sha256: 84dbd9a22052829788c61d65a624121148c777ae103d01b427f558661c9a01ee
+  policy_snapshot: 358ede168d02ee4c
+  visual_tower_lora: false
+  language_lora:
+    rank: 16
+    alpha: 32
+
+data:
+  root: /home/wh/ActiveMap/processed/muno21_v2/agent/sequential_controller_qwen_v1
+  confidence_supervision: smoothed_terminal_correctness_0p9_or_0p1
+  prompt_target_metadata_exposed: false
+  train:
+    trajectories: 2544
+    tasks: 848
+    selected_tool: 275
+    joint_records: 8182
+    joint_sha256: 121ff253e42a42f252670c21d7ce7ff7b9e334cafd1b0659fcafdbbad7054b4f
+    joint_curriculum_records: 9832
+    joint_curriculum_sha256: 72d8a7fd30029b36c4d7ac34d4909817c95281975a8f58ed5eca3289d55aebf3
+    selector_balanced_records: 3094
+    selector_balanced_sha256: a2a8fd2cc37a1d75dbe333e7b9b18d9e6e097ab0b6c5ee2d6a960368c1a67136
+    selector_actions: {ACQUIRE: 825, STOP: 2269}
+    tool_belief_records: 550
+    tool_belief_sha256: 9a96998146fc2b436de05ca6f82c983ba32208d73d7e78c9fa265d86ac87a457
+    trajectory_sha256: eaff8942d875601b9388e58968d87afdb1a3c266ab9b87826934127f0813ec0a
+  validation:
+    trajectories: 414
+    tasks: 138
+    selected_tool: 58
+    joint_records: 1358
+    joint_sha256: e673240ff78a8cba3ab8b540485aa66700f089cfe34972716691ac2b73f2807f
+    selector_records: 414
+    selector_sha256: 6ddbb0d1ff0aeadfc3cd687455e93659854eb5e1e1b15374f79ac2f0954832aa
+    selector_actions: {ACQUIRE: 58, STOP: 356}
+    tool_belief_records: 116
+    tool_belief_sha256: e93fcaa424bf3d1c79dea7dbb9a73499923c85b8b1c40982408d347edbf9a519
+    trajectory_sha256: 32c54db2c2e108f94eb3799ac89553593dc8e650b0f2a9acb7433ac9a09472ff
+  split_audit:
+    passed: true
+    train_tasks: 848
+    validation_tasks: 138
+    task_overlap: 0
+    trajectory_overlap: 0
+
+component_training:
+  order:
+    - selector
+    - tool_belief
+    - joint_curriculum
+  selector:
+    status: rejected_all_stop
+    output: /home/wh/ActiveMap/runs/agent_sft/qwen3_vl_4b_sequential_selector_v1
+    seed: 20260716
+    gpu: 4
+    epochs_ceiling: 2
+    learning_rate: 0.00005
+    effective_batch_size: 16
+    eval_steps: 50
+    early_stopping_patience: 3
+    checkpoint_metric: eval_loss
+    best_step: 50
+    best_eval_loss: 0.009496143087744713
+    stopped_step: 200
+    generation_result:
+      valid_action_rate: 1.0
+      predicted_calls: 0
+      acquire_recall: 0.0
+      macro_f1: 0.4623376623376623
+      realized_utility_sum: 0.0
+      promotion_passed: false
+    decision_token_diagnostic:
+      diagnostic_only: true
+      auc: 0.9277896164277412
+      positive_margin_median: -1.1249999701976776
+      negative_margin_median: -9.124999712905264
+  selector_v2_true_balance:
+    status: rejected_promotion_utility_ci_crosses_zero
+    selector_positive_multiplier: 9
+    expected_train_actions: {ACQUIRE: 2475, STOP: 2269}
+    expected_positive_rate: 0.5217116357504216
+    train_records: 4744
+    train_sha256: bc65297ae6e32989a31b69ac4670ba9c086e3cbc7e2ed189cfae40cc5adaab7d
+    validation_records: 414
+    validation_sha256: 6ddbb0d1ff0aeadfc3cd687455e93659854eb5e1e1b15374f79ac2f0954832aa
+    output: /home/wh/ActiveMap/runs/agent_sft/qwen3_vl_4b_sequential_selector_true_balance_v2
+    seed: 20260716
+    gpu: 4
+    best_step: 150
+    best_eval_loss: 0.013785171322524548
+    stopped_step: 300
+    final_adapter_weights_sha256: c4cce3c72ba3a6756eebb56ce18c87ca52abff2ba06863ec9e188f5abe997198
+    generation_result:
+      valid_action_rate: 1.0
+      predicted_calls: 116
+      predicted_call_rate: 0.28019323671497587
+      acquire_precision: 0.5
+      acquire_recall: 1.0
+      macro_f1: 0.7889908256880734
+      false_call_rate: 0.16292134831460675
+      realized_utility_sum: 12.5
+      realized_utility_mean: 0.030193236714975844
+      utility_ci95: [-0.03805857487922706, 0.10265700483091787]
+      promotion_passed: false
+    decoder: strict_greedy_zero_decision_margin
+    validation_threshold_tuning: false
+    rationale: >-
+      V1 learned strong decision-token ranking but retained a global STOP bias. True class
+      balance targets that bias without selecting a threshold on validation.
+  selector_v3_train_calibrated_safety:
+    status: external_validation_positive_but_utility_ci_crosses_zero
+    fit_calibration_split: task_grouped_train_only
+    split_seed: 20260717
+    calibration_fraction: 0.2
+    fit_tasks: 678
+    calibration_tasks: 170
+    task_overlap: 0
+    fit_balanced_records: 3786
+    fit_balanced_actions: {ACQUIRE: 1971, STOP: 1815}
+    fit_balanced_sha256: 6c007c7f8b98dda3a95a3032b334e185f8e91ba5e1c93d51da987816b595a3fc
+    calibration_records: 510
+    calibration_actions: {ACQUIRE: 56, STOP: 454}
+    calibration_sha256: 1048da272cb7f049d5c77d654842178ee9de80d70e57aabf9dfb0055ed6b3e05
+    objective: maximize_realized_utility_subject_to_call_and_false_call_constraints
+    calibration_constraints:
+      max_call_rate: 0.5
+      max_false_call_rate: 0.1
+      min_recall: 0.1
+      bootstrap_probability_gt_zero_at_least: 0.8
+    validation_threshold_tuning: false
+    training:
+      output: /home/wh/ActiveMap/runs/agent_sft/qwen3_vl_4b_sequential_selector_calibrated_v3
+      seed: 20260717
+      gpu: 4
+      best_step: 50
+      best_eval_loss: 0.007753205951303244
+      stopped_step: 200
+    train_calibration:
+      threshold: -0.5226265341043472
+      predicted_calls: 77
+      true_calls: 44
+      false_calls: 33
+      acquire_precision: 0.5714285714285714
+      acquire_recall: 0.7857142857142857
+      macro_f1: 0.8054606640615065
+      false_call_rate: 0.07268722466960352
+      realized_utility_sum: 15.0
+      realized_utility_mean: 0.029411764705882353
+      utility_ci95: [-0.011286764705882352, 0.07205882352941176]
+      utility_probability_gt_zero: 0.9155
+      calibration_gate_passed: true
+    external_validation:
+      tasks: 138
+      records: 414
+      threshold_source: held_out_training_tasks
+      predicted_calls: 71
+      true_calls: 40
+      false_calls: 31
+      acquire_precision: 0.5633802816901409
+      acquire_recall: 0.6896551724137931
+      macro_f1: 0.7750274478490866
+      always_stop_macro_f1: 0.4623376623376623
+      false_call_rate: 0.08707865168539326
+      realized_utility_sum: 13.75
+      realized_utility_mean: 0.03321256038647343
+      utility_ci95: [-0.016304347826086956, 0.08393719806763285]
+      utility_probability_gt_zero: 0.899
+      promotion_passed: false
+    reason: >-
+      Train-only calibration cuts V2 false calls from 58 to 31 while increasing total utility from
+      12.5 to 13.75. The remaining failure is the predeclared 95% utility lower bound on only 138
+      validation tasks, so the next intervention expands independent support rather than tuning on
+      validation.
+  tool_belief:
+    status: queued_after_selector
+  joint_curriculum:
+    status: blocked_until_component_audits
+
+selector_evaluation:
+  role: teacher_forced_current_policy_direct_draft_component_test
+  output: /home/wh/ActiveMap/runs/agent_eval/qwen3_vl_4b_sequential_selector_v1
+  greedy_generation: true
+  bootstrap:
+    grouping: task_id
+    repetitions: 2000
+  promotion:
+    valid_action_rate: 1.0
+    nonzero_calls: true
+    call_rate_at_most: 0.50
+    acquire_recall_at_least: 0.10
+    precision_at_least_prevalence: true
+    realized_utility_positive: true
+    utility_bootstrap_ci_above_zero: true
+    macro_f1_above_always_stop: true
+
+blocked_until_selector_evaluation:
+  - joint_controller_sft
+  - constrained_rl
+  - executable_writeback_promotion
+  - frozen_test
+
+cross_dataset_expansion:
+  status: sn7_full_oracle_8_shards_running
+  dataset: SpaceNet7
+  episodes: /mnt/mydisk/wh/ActiveMap/processed/sn7_v1/episodes_v3.jsonl
+  episode_count: 14572
+  snapshot_pairs: 1303
+  operations: {ADD: 5152, DELETE: 2224, KEEP: 6415, RESHAPE: 781}
+  updater_checkpoint: /mnt/mydisk/wh/ActiveMap/runs/updater/v4_hierarchical_vector_change_scratch_seed20260716/best_quality.pt
+  updater_validation:
+    edit_accuracy: 0.917728665913857
+    macro_f1: 0.7992003369392927
+    false_edit_rate: 0.048279404211607604
+    mean_polygon_iou: 0.5902974450555775
+  protocol:
+    stages: [episode_audit, updater_oracle_smoke, full_oracle, sequential_conversion]
+    splits: [train, val]
+    test_assets_read: false
+    validation_threshold_reuse: false
+    bootstrap_grouping: [task_id, aoi_id]
+  train_validation_support:
+    episodes: 12409
+    train_episodes: 10286
+    validation_episodes: 2123
+    train_aois: 42
+    validation_aois: 9
+    aoi_overlap: 0
+  pilot20:
+    episodes: 160
+    states: 562
+    targets: {ACQUIRE: 98, STOP: 464}
+    train_targets_by_ground_truth:
+      ADD: {ACQUIRE: 4, STOP: 60}
+      DELETE: {ACQUIRE: 15, STOP: 55}
+      KEEP: {ACQUIRE: 0, STOP: 60}
+      RESHAPE: {ACQUIRE: 33, STOP: 57}
+    validation_targets_by_ground_truth:
+      ADD: {ACQUIRE: 3, STOP: 59}
+      DELETE: {ACQUIRE: 15, STOP: 55}
+      KEEP: {ACQUIRE: 0, STOP: 60}
+      RESHAPE: {ACQUIRE: 28, STOP: 58}
+    schema_audit_passed: true
+    utility_structure_audit_passed: true
+    test_assets_read: false
+  full_oracle:
+    server: nts-server.harmo.icu
+    physical_gpu: 2
+    shards: 8
+    shard_episode_range: [1500, 1584]
+    restartable_by_completed_shard: true
+    log: /mnt/mydisk/wh/ActiveMap/logs/joint_debug/sn7_sequential_full_oracle.log

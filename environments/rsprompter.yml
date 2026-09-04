@@ -1,0 +1,27 @@
+name: rsprompter
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pytorch=2.1.2
+  - torchvision=0.16.2
+  - torchaudio=2.1.2
+  - pytorch-cuda=12.1
+  - pip
+  - pip:
+      - openmim>=0.3.9,<1
+      - transformers==4.38.1
+      - peft==0.8.2
+      - wandb==0.16.3
+      - einops
+      - pycocotools
+      - shapely
+      - scipy
+      - terminaltables
+      - importlib-metadata
+      - mat4py==0.6.0
+
+# After creation, install the upstream-recommended MMCV build inside this env:
+#   mim install mmcv==2.1.0

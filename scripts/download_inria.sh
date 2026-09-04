@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-TARGET_ROOT="${1:-data/raw/inria_aerial}"
+TARGET_ROOT="${1:-/mnt/mydisk/wh/ActiveMap/datasets/inria_aerial}"
 EXTRACT="${2:-true}"
 BASE_URL="https://files.inria.fr/aerialimagelabeling"
 EXTRACTION_COMPLETE="$TARGET_ROOT/EXTRACTION_COMPLETE"
@@ -18,12 +18,12 @@ for part in 001 002 003 004 005; do
   filename="aerialimagelabeling.7z.$part"
   if command -v aria2c >/dev/null 2>&1; then
     aria2c --continue=true --allow-overwrite=true --auto-file-renaming=false \
-      --file-allocation=none \
+      --check-certificate=false --file-allocation=none \
       --max-connection-per-server=16 --split=16 --min-split-size=4M \
       --summary-interval=30 --dir "$TARGET_ROOT/archives" --out "$filename" \
       "$BASE_URL/$filename"
   else
-    wget -c --progress=dot:giga \
+    wget -c --no-check-certificate --progress=dot:giga \
       "$BASE_URL/$filename" -O "$TARGET_ROOT/archives/$filename"
   fi
   actual_bytes="$(stat -c '%s' "$TARGET_ROOT/archives/$filename")"

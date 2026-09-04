@@ -1,0 +1,160 @@
+schema_version: sn7-step0-frozen-registry-v2
+status: validation_promoted_test_ready_protocol_recovery
+dataset: sn7
+method: benefit_aware_step0_recurrent_belief
+seeds: [20260730, 20260731, 20260801]
+test_policy: frozen_once
+test_assets_read: false
+
+protocol:
+  image_size: 512
+  updater_threshold: 0.5
+  delta_margin: 0.15
+  confidence_floor: 0.0
+  evidence_fusion: confidence_weighted
+  evidence_mode: last
+  max_acquisitions: 2
+  max_tool_calls: 4
+  bootstrap_unit: aoi_id
+  bootstrap_repetitions: 10000
+  bootstrap_seed: 20260729
+  test_episode_construction:
+    max_month_gap: 1
+    min_change_persistence: 2
+    min_area: 16
+    max_centroid_distance: 20
+    seed: 20260710
+    max_per_operation: 20
+    recovery_basis: "Matches the pre-existing cap20 train/validation support rule; fixed before any v2 model prediction completed."
+  qualitative:
+    seed: 20260730
+    candidate: benefit
+    methods: [notool, forced, benefit]
+    per_edit_success: 2
+    per_edit_failure: 1
+    per_edit_disagreement: 1
+    minimum_visual_fraction: 0.01
+    individual_unlabeled_panels: true
+    composites_rendered: false
+
+shared_artifacts:
+  - id: step0_states
+    path: "${STORAGE_ROOT}/processed/sn7_v1/agent/step0_selector_v1/states_train_val_step0.jsonl"
+    sha256: e15cd3adccae91a1c081573ad6fc37f845a3302f68af8e7f42f4f192b71185ac
+  - id: validation_episodes
+    path: "${STORAGE_ROOT}/processed/sn7_v1/agent/executable_selector_v3_512_sharded/closed_loop_val_bundle_v1/episodes_val.jsonl"
+    sha256: 41471fd8e17712ea64f1fa22ab16742f1dbe16eb92c2bf98c8f9939a2b943711
+  - id: frozen_updater
+    path: "${STORAGE_ROOT}/models/frozen_updater/sn7_v4_hierarchical_vector_change_seed20260716/best_quality.pt"
+    sha256: 40334c82c319722209d24684ebd9671daf6b472ad26285710ca6d220fa48f13e
+
+seed_artifacts:
+  "20260730":
+    selector:
+      path: "${STORAGE_ROOT}/runs/selector/sn7_step0_two_stage_v2_seed20260730/edit_utility_seed20260730/best.pt"
+      sha256: cddb16db2215398d278ca644b5053ccde4e152d48c2f37ecaf31260fb298f4c8
+      stop_margin: 0.4747273325920105
+    tool_gate:
+      path: "${STORAGE_ROOT}/runs/sn7_active_catalog/step0_tool_need_gate_seed20260730_benefit_gate_v1/gate.joblib"
+      sha256: e28326b31f15747dea47516a8c43260eaa3bd1c5eb5df846e8711d3d485fc6fb
+    tool_belief:
+      path: "${STORAGE_ROOT}/runs/agent/sn7_step0_tool_belief_gated_seed20260730/best_promoted.pt"
+      sha256: 72fb47c5e61c1c73ca02a896f5946cb3087c3b6977392dac0e1a0013fdb11eaa
+    post_tool_adapter:
+      path: "${STORAGE_ROOT}/runs/agent/sn7_step0_post_tool_adapter_updated_seed20260730/best.pt"
+      sha256: 61df807f07184b775725b5048c8366fa3b455d45e223dd52d486fc8b70662832
+  "20260731":
+    selector:
+      path: "${STORAGE_ROOT}/runs/selector/sn7_step0_two_stage_v2_seed20260731/edit_utility_seed20260731/best.pt"
+      sha256: 1135c73bde1548680cb9279dbbe2d43e17577a41cc7ce1c63f9bec513e8941dd
+      stop_margin: 0.6537333726882935
+    tool_gate:
+      path: "${STORAGE_ROOT}/runs/sn7_active_catalog/step0_tool_need_gate_seed20260731_benefit_gate_v1/gate.joblib"
+      sha256: 5bc9567e7538226f1ce53251b018be2c58f9c199d1a9093be5bce437249b9e3d
+    tool_belief:
+      path: "${STORAGE_ROOT}/runs/agent/sn7_step0_tool_belief_gated_seed20260731/best_promoted.pt"
+      sha256: 88ea0ea609bfb98e5c9f106679703128b0138980f0b0b050d23c3fd97383a278
+    post_tool_adapter:
+      path: "${STORAGE_ROOT}/runs/agent/sn7_step0_post_tool_adapter_updated_seed20260731/best.pt"
+      sha256: 920142adfefd021b8ff099b9f8c539b5f4272a338b673e64a65ac861c3788233
+  "20260801":
+    selector:
+      path: "${STORAGE_ROOT}/runs/selector/sn7_step0_two_stage_v2_seed20260801/edit_utility_seed20260801/best.pt"
+      sha256: 0f89929b72fdbda4d43eeae60ddc5a848a8659c3f470a5cf5587bc2112a9eb43
+      stop_margin: 0.378591388463974
+    tool_gate:
+      path: "${STORAGE_ROOT}/runs/sn7_active_catalog/step0_tool_need_gate_seed20260801_benefit_gate_v1/gate.joblib"
+      sha256: 593c16f60e657d583cc2396e2386126e7dabd04688a4c3921669126b28452854
+    tool_belief:
+      path: "${STORAGE_ROOT}/runs/agent/sn7_step0_tool_belief_gated_seed20260801/best_promoted.pt"
+      sha256: a6232b20c5145eb1e5f116c91b046e50b3890121cb9396a90f45010c6110807b
+    post_tool_adapter:
+      path: "${STORAGE_ROOT}/runs/agent/sn7_step0_post_tool_adapter_updated_seed20260801/best.pt"
+      sha256: 5e1ed0470ccf237f0b6f6d58ae11c8e48a3c6d7a3cf722138fab8366d7416ea4
+
+validation_evidence:
+  - id: selective_frontier
+    path: "${STORAGE_ROOT}/runs/sn7_active_catalog/sn7_step0_selective_tool_frontier_three_seed_v2.json"
+    sha256: 5c553af272301a1c31912fa6948d674e9ad7ce19d6f1ff7cf143db749c8031fc
+  - id: benefit_vs_no_tool_writeback
+    path: "${STORAGE_ROOT}/runs/sn7_active_catalog/step0_validation_writeback_v1/benefit_vs_notool.json"
+    sha256: cd37b1e0e8b79d7cc173438e1d609f7c606dfe09045a8b670003a7a18559da0c
+  - id: benefit_vs_forced_writeback
+    path: "${STORAGE_ROOT}/runs/sn7_active_catalog/step0_validation_writeback_v1/benefit_vs_forced.json"
+    sha256: ed7f06b16af0458df1b53d2156ddeca7426c2578e3f6a16bf2390f1423e7468c
+  - id: step0_frontier_promotion
+    path: "${STORAGE_ROOT}/runs/sn7_active_catalog/step0_validation_writeback_v1/step0_frontier_promotion.json"
+    sha256: 34762feac6592909efd1dbfb8773a674228450506f86369afc9e9c974923ca78
+  - id: writeback_promotion
+    path: "${STORAGE_ROOT}/runs/sn7_active_catalog/step0_validation_writeback_v1/writeback_promotion_v2.json"
+    sha256: 9ebc151e2e6235c595c451e998c40682955d59a23354b7edf14d8c0d0328c993
+  - id: qualitative_summary
+    path: "${STORAGE_ROOT}/paper/qualitative/sn7_step0_v2_seed20260730_rerun2/summary.json"
+    sha256: 1a85e3c5131221ac40f1ad3d2a828a55a3ee843596dee519ab8bc2aa4265e5a8
+  - id: qualitative_selection
+    path: "${STORAGE_ROOT}/paper/qualitative/sn7_step0_v2_seed20260730_rerun2/selection.jsonl"
+    sha256: 7b1df485b76271478001286f6f2b5f482b263592c28e48ad5a01a05fbd52963e
+
+test_manifest_artifacts:
+  - id: test_path_manifest
+    path: "${STORAGE_ROOT}/manifests/sn7_frozen_v2/test_release_v1/sn7_test_path_manifest.parquet"
+    sha256: b29e3841b0e6912cb3b8fec33a3486fac212799c313bf759c5d001d4cff0c2f6
+  - id: test_aoi_ids
+    path: "${STORAGE_ROOT}/manifests/sn7_frozen_v2/test_release_v1/test_aoi_ids.txt"
+    sha256: 0c40ecf7c37439fb2b6163f1f280a86e84c1955ba51e270790a83be5a512af41
+  - id: test_manifest_audit
+    path: "${STORAGE_ROOT}/manifests/sn7_frozen_v2/test_release_v1/audit.json"
+    sha256: 305b7c3f94e55f96486123e18db0b2e022aaf34e5a27ea3a7193dc1e2a1ac617
+
+code_artifacts:
+  - id: frozen_test_launcher
+    path: "${PROJECT_ROOT}/scripts/run_sn7_step0_frozen_test_v3_cap20.sh"
+    sha256: bd01ea0ff78777d8d8017e882273d121cc1d4e9b757b9ce3ca0e44f84a978917
+  - id: closed_loop_evaluator
+    path: "${PROJECT_ROOT}/scripts/evaluate_active_catalog_closed_loop_baselines.py"
+    sha256: bfeb8044506c30b4d1a5a0761236116681d0520d7bb47ce567c72e8963f26007
+  - id: three_policy_summarizer
+    path: "${PROJECT_ROOT}/scripts/summarize_sn7_step0_three_policy.py"
+    sha256: c947d9e2b64a4436b0c1c04b3250c64b89583964bd0bf643c6f686d9f77e10b3
+  - id: frontier_promotion
+    path: "${PROJECT_ROOT}/scripts/assess_sn7_step0_frontier_promotion.py"
+    sha256: 33a832e863b1210b221c6cdb22e3fc754159282d40a6a22fb4bc96911b748f4d
+  - id: writeback_promotion
+    path: "${PROJECT_ROOT}/scripts/assess_active_catalog_tool_writeback_promotion.py"
+    sha256: d41ef59b1a2f94b1eade2284fe07be5acdea518abbbce59ba1379441470010b3
+  - id: frozen_test_gate
+    path: "${PROJECT_ROOT}/scripts/run_frozen_paper_test.py"
+    sha256: e53d4cc7faaffe7444e02d2a5b22c8a8d0e419c04010b06d49587d6adaec0b0f
+  - id: frozen_test_reporter
+    path: "${PROJECT_ROOT}/scripts/export_sn7_step0_frozen_test_tables.py"
+    sha256: 9e93c6322f6e7896c0016ba6d784aebf7019bcd863ff0a52e6d6360ba30a08de
+  - id: cli
+    path: "${PROJECT_ROOT}/src/activemap/cli.py"
+    sha256: 448f6b0f675c73b81c9eb9c26ce880f34b0776c30804e5a0689cf182bf59eb54
+  - id: frozen_test_authorization
+    path: "${PROJECT_ROOT}/src/activemap/frozen_test.py"
+    sha256: ae06a3237c4d7ff31cc4067a6b7f83d62021ca5cdf26150acfda24c992faab67
+
+test_gate:
+  ready: true
+  blockers: []

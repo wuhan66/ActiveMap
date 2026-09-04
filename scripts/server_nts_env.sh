@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Joint-debug paths for the original 4x3090 server. Validation only.
+export ACTIVEMAP_PROJECT_ROOT="${ACTIVEMAP_PROJECT_ROOT:-/home/wh/projects/activemap-v1-joint-debug}"
+export ACTIVEMAP_STORAGE_ROOT="${ACTIVEMAP_STORAGE_ROOT:-/mnt/mydisk/wh/ActiveMap}"
+export ACTIVEMAP_DATA_ROOT="${ACTIVEMAP_DATA_ROOT:-${ACTIVEMAP_STORAGE_ROOT}}"
+export ACTIVEMAP_DATASET_ROOT="${ACTIVEMAP_DATASET_ROOT:-${ACTIVEMAP_STORAGE_ROOT}/datasets}"
+export ACTIVEMAP_PROCESSED_ROOT="${ACTIVEMAP_PROCESSED_ROOT:-${ACTIVEMAP_STORAGE_ROOT}/processed}"
+export ACTIVEMAP_RUN_ROOT="${ACTIVEMAP_RUN_ROOT:-${ACTIVEMAP_STORAGE_ROOT}/runs/joint_debug}"
+export ACTIVEMAP_LOG_ROOT="${ACTIVEMAP_LOG_ROOT:-${ACTIVEMAP_STORAGE_ROOT}/logs/joint_debug}"
+export ACTIVEMAP_MODEL_ROOT="${ACTIVEMAP_MODEL_ROOT:-/home/wh/hf_models}"
+export ACTIVEMAP_GIS_ENV="${ACTIVEMAP_GIS_ENV:-/home/wh/venvs/activemap}"
+export ACTIVEMAP_AGENT_ENV="${ACTIVEMAP_AGENT_ENV:-/home/wh/venvs/activemap}"
+export ACTIVEMAP_GPU_IDS="${ACTIVEMAP_GPU_IDS:-0,1}"
+export ACTIVEMAP_MAX_GPUS="${ACTIVEMAP_MAX_GPUS:-2}"
+export ACTIVEMAP_CLUSTER_ROLE="validation_debug"
+export ACTIVEMAP_DISABLE_FROZEN_TEST=1

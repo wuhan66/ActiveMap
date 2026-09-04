@@ -1,0 +1,49 @@
+seed: 20260710
+output_dir: /home/wh/projects/activemap-v1/outputs/updater/multidata_v1
+
+data:
+  samples: /mnt/mydisk/wh/ActiveMap/processed/multidata_v1/updater_samples.jsonl
+  input_size: 256
+  dataset_balance_power: 1.0
+
+model:
+  image_channels: 3
+  prior_channels: 1
+  base_channels: 32
+  geometry_dim: 8
+  edit_classes: 4
+  dropout: 0.10
+  use_prior: true
+
+training:
+  device: auto
+  batch_size: 16
+  num_workers: 8
+  epochs: 100
+  learning_rate: 0.0003
+  weight_decay: 0.0001
+  grad_clip: 1.0
+  amp: true
+  early_stopping_patience: 15
+  show_progress: true
+  augmentation:
+    enabled: true
+    horizontal_flip_probability: 0.5
+    vertical_flip_probability: 0.5
+    rotate90_probability: 0.5
+    brightness: 0.10
+    contrast: 0.10
+    gaussian_noise: 0.01
+
+loss:
+  segmentation: 1.0
+  segmentation_bce: 1.0
+  segmentation_dice: 1.0
+  segmentation_focal: 0.5
+  focal_gamma: 2.0
+  edit: 1.0
+  geometry: 0.25
+  confidence: 0.25
+  false_edit: 0.5
+  missed_edit: 0.5
+  edit_class_weights: auto

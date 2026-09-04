@@ -1,0 +1,12 @@
+{
+  "call_id": "quality-example-001",
+  "tool": "IMAGE_QUALITY",
+  "inputs": {
+    "image_path": "/path/to/georeferenced-image.tif"
+  },
+  "parameters": {
+    "bands": [1, 2, 3],
+    "pixel_window": [0, 0, 512, 512],
+    "out_size": [256, 256]
+  }
+}

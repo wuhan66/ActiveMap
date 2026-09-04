@@ -64,10 +64,8 @@ lightning_logs/
 *.tar
 *.zip
 
-# Internal experiment and cluster configurations
-configs/**/*_server.yaml
-configs/**/*_hdpi.yaml
-configs/**/*_nts.yaml
+# The release branch keeps infrastructure-specific configs out of version
+# control. The private research-code branch intentionally tracks them.
 
 # Submission, private operations, and generated release artifacts
 releases/

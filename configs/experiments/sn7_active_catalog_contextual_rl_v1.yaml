@@ -1,0 +1,32 @@
+schema_version: active-catalog-contextual-rl-config-v1
+dataset: sn7
+base_policy: validation_promoted_qwen3_vl_4b_sft
+scope: offline_multimodal_contextual_rl
+train_seeds: [20260717]
+promotion_seeds: [20260717, 20260718, 20260719]
+optimization:
+  epochs: 1
+  learning_rate: 1.0e-6
+  gradient_accumulation: 16
+  action_limit: 4
+  kl_beta: 0.05
+  entropy_weight: 0.01
+  temperature: 1.0
+reward:
+  primary: frozen_quality_cost_utility
+  executable_actions: [STOP, ACQUIRE]
+  model_visible_utility: false
+promotion:
+  compare_against: promoted_sft_same_seed
+  require_recurrent_closed_loop: true
+  require_executable_writeback: true
+  require_positive_map_gain_ci95: true
+  false_edit_noninferiority_margin: 0.01
+  topology_noninferiority_margin: 0.01
+ablations:
+  - no_kl
+  - no_entropy
+  - action_limit_2
+  - dpo_instead_of_contextual_rl
+claim_boundary: offline contextual RL until optimization executes recurrent environment transitions
+test_policy: validation_only

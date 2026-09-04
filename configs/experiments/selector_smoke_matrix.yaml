@@ -1,0 +1,31 @@
+task: selector
+base_config: ../smoke/selector.yaml
+output_root: ../../outputs/smoke/selector_ablations
+seeds: [20260710]
+reference: full
+
+evaluation:
+  enabled: true
+  split: test
+  budgets: [1, 2]
+  primary_budget: 2
+
+experiments:
+  - name: full
+    overrides: {}
+  - name: generic
+    overrides:
+      ablation:
+        condition_on_hypothesis: false
+  - name: no_edit_type
+    overrides:
+      ablation:
+        drop_hypothesis_groups: [edit_type]
+  - name: no_cost
+    overrides:
+      ablation:
+        drop_evidence_groups: [cost]
+  - name: no_stop
+    overrides:
+      ablation:
+        allow_stop: false

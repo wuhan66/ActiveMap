@@ -1,0 +1,214 @@
+schema_version: activemap-claim-evidence-protocol-v2
+updated: 2026-08-01
+paper_target: [CVPR, ICLR]
+working_title: "ActiveMap: Active Evidence Acquisition for Safe Editable Map Updating"
+
+problem_origin:
+  established_task:
+    statement: "Editable map update from a prior map and newer observations is an established task."
+    anchors: [muno21, argotweak]
+  operational_tension:
+    statement: "Candidate observations are redundant, costly, and potentially noisy; indiscriminate fusion is not free."
+    anchors: [optimvmap]
+  adjacent_capability:
+    statement: "Visual agents can adaptively search, crop, retrieve, and invoke domain tools."
+    anchors: [sensesearch, geommagent]
+  intersection_gap:
+    statement: "Prior work does not jointly evaluate sequential evidence choice, stopping, and risk-aware executable map writeback."
+
+literature_anchors:
+  - id: muno21
+    title: "Beyond Road Extraction: A Dataset for Map Update Using Aerial Images"
+    venue: ICCV 2021
+    role: establishes_editable_remote_sensing_map_update
+    url: https://openaccess.thecvf.com/content/ICCV2021/html/Bastani_Beyond_Road_Extraction_A_Dataset_for_Map_Update_Using_Aerial_ICCV_2021_paper.html
+  - id: argotweak
+    title: "ArgoTweak: Towards Self-Updating HD Maps through Structured Priors"
+    venue: ICCV 2025
+    role: establishes_realistic_priors_and_atomic_hd_map_changes
+    url: https://kth-rpl.github.io/ArgoTweak/
+  - id: optimvmap
+    title: "OptiMVMap: Offline Vectorized Map Construction via Optimal Multi-vehicle Perspectives"
+    venue: CVPR 2026
+    role: establishes_select_then_fuse_for_costly_noisy_candidate_views
+    url: https://openaccess.thecvf.com/content/CVPR2026/html/Dan_OptiMVMap_Offline_Vectorized_Map_Construction_via_Optimal_Multi-vehicle_Perspectives_CVPR_2026_paper.html
+  - id: sensesearch
+    title: "SenseSearch: Empowering Vision-Language Models with High-Resolution Agentic Search-Reasoning via Reinforcement Learning"
+    venue: CVPR 2026
+    role: establishes_adaptive_high_resolution_visual_search
+    url: https://openaccess.thecvf.com/content/CVPR2026/html/Chng_SenseSearch_Empowering_Vision-Language_Models_with_High-Resolution_Agentic_Search-Reasoning_via_Reinforcement_CVPR_2026_paper.html
+  - id: geommagent
+    title: "GeoMMBench and GeoMMAgent: Toward Expert-Level Multimodal Intelligence in Geoscience and Remote Sensing"
+    venue: CVPR 2026
+    role: establishes_dynamic_geoscience_retrieval_perception_and_reasoning_tools
+    url: https://openaccess.thecvf.com/content/CVPR2026/papers/Xiao_GeoMMBench_and_GeoMMAgent_Toward_Expert-Level_Multimodal_Intelligence_in_Geoscience_and_CVPR_2026_paper.pdf
+  - id: mapex
+    title: "MapEx: Indoor Structure Exploration with Probabilistic Information Gain from Global Map Predictions"
+    venue: ICRA 2025
+    role: establishes_information_gain_driven_active_mapping
+    url: https://arxiv.org/abs/2409.15590
+
+protocol_invariants:
+  support_unit: episode_or_aoi
+  bootstrap_replicates: 10000
+  confidence_level: 0.95
+  train_validation_test_separation: aoi_or_log_safe
+  checkpoint_selection: validation_only
+  test_policy: frozen_once
+  common_perception_backend_within_controller_table: true
+  common_candidate_catalog_within_dataset: true
+  common_budget_and_cost_definition_within_comparison: true
+  pooled_cross_dataset_primary_score: false
+  primary_metric_order:
+    - executable_map_quality
+    - false_edit_safety
+    - quality_cost_frontier
+    - policy_diagnostics
+
+baselines:
+  - {id: always_stop, family: non_active, role: direct_update_lower_anchor, readiness: ready}
+  - {id: acquire_all, family: fixed_acquisition, role: maximum_evidence_control, readiness: partial}
+  - {id: random, family: heuristic, role: selection_sanity_control, readiness: implementation_ready}
+  - {id: cheapest_first, family: heuristic, role: cost_only_control, readiness: implementation_ready}
+  - {id: quality_first, family: heuristic, role: quality_metadata_control, readiness: implementation_ready}
+  - {id: uncertainty_gate, family: heuristic, role: direct_policy_uncertainty_control, readiness: ready}
+  - {id: mapex_style, family: heuristic, role: information_gain_control, readiness: implementation_ready}
+  - {id: greedy_utility, family: heuristic, role: one_step_risk_aware_control, readiness: implementation_ready}
+  - {id: generic_selector, family: learned_selector, role: non_edit_conditioned_control, readiness: checkpoint_ready}
+  - {id: edit_conditioned_selector, family: learned_selector, role: strongest_static_selector, readiness: checkpoint_ready}
+  - {id: direct_vlm, family: structured_vlm, role: direct_action_control, readiness: ready}
+  - {id: react_style, family: protocol_control, role: prompt_only_recurrent_control, readiness: ready}
+  - {id: plan_execute_style, family: protocol_control, role: frozen_plan_control, readiness: ready}
+  - {id: geommagent_style, family: protocol_control, role: geoscience_agent_protocol_control, readiness: ready}
+  - {id: sensesearch_style, family: protocol_control, role: visual_search_protocol_control, readiness: ready}
+  - {id: old_vla, family: learned_controller, role: stale_policy_utility_control, readiness: ready}
+  - {id: active_residual_no_tools, family: proposed, role: promoted_acquisition_controller, readiness: ready}
+  - {id: active_residual_no_tools_safe, family: proposed, role: final_candidate, readiness: evaluation_pending}
+  - {id: selective_tools, family: causal_ablation, role: domain_dependent_tool_branch, readiness: ready}
+  - {id: recurrent_belief, family: causal_ablation, role: belief_mechanism_test, readiness: ready}
+  - {id: oracle, family: upper_bound, role: attainable_evidence_and_commit_upper_bound, readiness: implementation_ready}
+
+claims:
+  - id: C1_setting
+    statement: "Editable map update should be evaluated when observations are candidates with costs rather than a fixed pre-supplied bundle."
+    origin: [muno21, argotweak, optimvmap]
+    comparisons: [always_stop, acquire_all, random, greedy_utility]
+    metrics: [executable_map_quality, false_edit_rate, mean_cost, quality_cost_auc]
+    figures: [F1_problem_origin, F3_budget_frontier]
+    status: protocol_ready
+  - id: C2_active_selection
+    statement: "Adaptive evidence selection is valuable when direct-policy reliability degrades, while a learned stopping policy avoids harmful acquisition on clean, already-reliable states."
+    origin: [optimvmap, mapex]
+    comparisons: [always_stop, acquire_all, uncertainty_gate, mapex_style, greedy_utility, active_residual_no_tools_safe]
+    metrics: [executable_map_quality, false_edit_rate, matched_cost_quality, matched_quality_cost, quality_cost_auc]
+    figures: [F3_budget_frontier, F4_safety_cost_plane]
+    status: validation_supported
+    evidence:
+      - .codex-results/paper_p0_20260801/sn7_p0_controller_table.json
+      - .codex-results/paper_p0_20260802/sn7_unified_executable_controller_matrix_20260802/controller_table.json
+      - artifacts/paper_evidence/sn7_controller_prior_corruption_realization_v2/SUMMARY_COMPLETE.json
+      - docs/figures/sn7_reliability_conditioned_frontier_20260802/summary.json
+      - .codex-results/hdpi/runs/sn7_active_catalog/step0_validation_writeback_v1/benefit_vs_notool.json
+      - .codex-results/hdpi/runs/sn7_active_catalog/step0_validation_writeback_v1/writeback_promotion_v2.json
+  - id: C3_policy_relative
+    statement: "Evidence value conditioned on the current update policy is more reliable than static or stale evidence ranking."
+    origin: [optimvmap, sensesearch]
+    comparisons: [generic_selector, edit_conditioned_selector, old_vla, active_residual_no_tools]
+    metrics: [realized_residual_utility, exact_evidence_recall, false_call_rate, quality_cost_auc]
+    figures: [F2_method, F5_policy_shift]
+    status: validation_supported
+    evidence:
+      - .codex-results/paper_p0_20260801/sn7_p0_controller_table.json
+      - .codex-results/paper_p0_20260802/sn7_unified_executable_controller_matrix_20260802/controller_table.json
+      - artifacts/paper_evidence/sn7_controller_prior_corruption_realization_v2/SUMMARY_COMPLETE.json
+      - docs/figures/sn7_reliability_conditioned_frontier_20260802/summary.json
+      - .codex-results/hdpi/runs/sn7_active_catalog/step0_paper_tables_20260805/controller_table.md
+      - .codex-results/hdpi/runs/sn7_active_catalog/step0_paper_tables_20260805/paired_intervals.json
+  - id: C4_safe_commit
+    statement: "Separating acquisition stopping from risk-aware edit commitment improves terminal safety, although its effect can be neutralized by a conservative executable updater."
+    origin: [argotweak]
+    comparisons: [active_residual_no_tools, active_residual_no_tools_safe]
+    metrics: [false_edit_rate, missed_edit_rate, executable_map_quality, commit_precision, calibration_error]
+    figures: [F4_safety_cost_plane, F6_reliability]
+    status: partial_validation_support
+    evidence:
+      - .codex-results/paper_p0_20260801/safe_stump_summary.json
+      - .codex-results/paper_p0_20260801/safe_logistic_summary.json
+      - .codex-results/paper_p0_20260802/sn7_unified_executable_controller_matrix_20260802/controller_table.json
+  - id: C5_cross_geometry
+    statement: "The active-control principle transfers between building polygons and road graphs with domain-specific execution heads."
+    origin: [muno21]
+    comparisons: [always_stop, edit_conditioned_selector, active_residual_no_tools_safe]
+    metrics: [polygon_iou, apls, topology_validity, false_edit_rate, quality_cost_auc]
+    figures: [F7_cross_geometry, F8_qualitative]
+    status: validation_supported
+    evidence:
+      - artifacts/paper_evidence/muno21_cross_geometry_v2_20260805_retry/cross_geometry_summary.md
+      - artifacts/paper_evidence/muno21_cross_geometry_v2_20260805_retry/official_graph_metrics.csv
+      - artifacts/paper_evidence/muno21_cross_geometry_v2_20260805_retry/manifest.json
+      - .codex-results/hdpi/runs/paper_evidence/muno21_official_three_seed_20260805/official_vs_always_stop.json
+      - .codex-results/hdpi/runs/paper_evidence/muno21_official_three_seed_20260805/official_vs_old_selector.json
+  - id: C6_replaceable_perception
+    statement: "The controller is separable from the perception backend and is not a segmentation architecture contribution."
+    origin: [muno21, argotweak]
+    comparisons: [active_residual_no_tools_safe]
+    metrics: [controller_delta_per_backend, executable_map_quality, false_edit_rate]
+    figures: [F7_cross_geometry]
+    status: validation_supported
+    evidence:
+      - paper/tables/sn7_perception_baselines_v1/table.csv
+      - .codex-results/paper_p0_20260802/muno21_capacity_backbone_controls_20260802/summary.json
+  - id: C7_domain_dependent_tools
+    statement: "Tool and recurrent-belief value is domain dependent rather than an assumed universal source of gain."
+    origin: [geommagent, sensesearch]
+    comparisons: [active_residual_no_tools, selective_tools, recurrent_belief]
+    metrics: [map_quality_delta, false_edit_delta, missed_edit_delta, quality_cost_delta]
+    figures: [F9_causal_ablation]
+    status: validation_supported_negative_boundary
+    evidence:
+      - docs/tables/sn7_tools_causal_ablation_2026-08-01.csv
+      - docs/tables/sn7_belief_causal_ablation_2026-08-01.csv
+  - id: C8_cross_domain_hd_map
+    statement: "A small onboard HD-map pilot tests interface portability; the main empirical and scientific claims remain scoped to remote-sensing editable map update."
+    origin: [argotweak, optimvmap]
+    comparisons: [always_stop, greedy_utility, active_residual_no_tools_safe]
+    metrics: [atomic_edit_macro_f1, unchanged_preservation, geometry_distance, topology_validity, quality_cost_auc]
+    figures: [F10_hd_map_transfer]
+    status: validation_supported_negative_boundary
+    evidence:
+      - .codex-results/argotweak_executable_map_v2/paper_table.json
+      - .codex-results/argotweak_safety_listwise_v1/ensemble_summary.json
+      - .codex-results/argotweak_safety_listwise_v1/promotion.json
+
+figures:
+  - {id: F1_problem_origin, role: literature_gap_diagram, required_for: main}
+  - {id: F2_method, role: active_residual_and_safe_commit_architecture, required_for: main}
+  - {id: F3_budget_frontier, role: three_budget_quality_cost_frontier, required_for: main}
+  - {id: F4_safety_cost_plane, role: matched_cost_quality_safety_comparison, required_for: main}
+  - {id: F5_policy_shift, role: reliability_conditioned_policy_relative_evidence_value, asset: docs/figures/sn7_reliability_conditioned_frontier_20260802/sn7_reliability_conditioned_frontier.pdf, required_for: main}
+  - {id: F6_reliability, role: safe_commit_reliability_and_calibration, required_for: main}
+  - {id: F7_cross_geometry, role: sn7_muno21_transfer_summary, asset: artifacts/paper_evidence/muno21_cross_geometry_v2_20260805_retry/muno21_cross_geometry_validation.png, required_for: main}
+  - {id: F8_qualitative, role: rgb_heatmap_belief_edit_cases, required_for: main}
+  - {id: F9_causal_ablation, role: tool_and_belief_negative_causal_result, required_for: appendix}
+  - {id: F10_hd_map_transfer, role: small_argotweak_interface_portability_pilot, required_for: appendix_optional}
+
+promotion_gates:
+  main_controller:
+    candidate: active_residual_no_tools_safe
+    required_baselines: [always_stop, acquire_all, random, uncertainty_gate, mapex_style, greedy_utility, generic_selector, edit_conditioned_selector, old_vla]
+    required_datasets: [sn7, muno21]
+    conditions:
+      - paired_support_identity
+      - three_training_seeds_for_learned_methods
+      - aoi_or_task_bootstrap_ci
+      - matched_cost_or_matched_quality_non_dominance
+      - executable_writeback_metrics
+      - false_edit_non_inferiority
+  cross_domain:
+    candidate: active_residual_no_tools_safe
+    required_datasets: [argotweak]
+    conditions:
+      - official_split_or_log_safe_split
+      - native_metric_and_activemap_metric_both_reported
+      - native_baseline_and_fixed_policy_baselines
+      - log_level_paired_bootstrap

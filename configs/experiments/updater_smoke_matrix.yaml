@@ -1,0 +1,25 @@
+task: updater
+base_config: ../smoke/updater.yaml
+output_root: ../../outputs/smoke/updater_ablations
+seeds: [20260710]
+reference: full
+
+evaluation:
+  enabled: true
+  split: test
+  device: auto
+  batch_size: 8
+  num_workers: 0
+  commit_threshold: 0.0
+
+experiments:
+  - name: full
+    overrides: {}
+  - name: no_prior
+    overrides:
+      model:
+        use_prior: false
+  - name: no_false_edit_penalty
+    overrides:
+      loss:
+        false_edit: 0.0

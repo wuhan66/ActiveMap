@@ -1,0 +1,93 @@
+seed: 20260727
+
+data:
+  samples: /mnt/mydisk/wh/ActiveMap/processed/muno21_v2/updater/updater_samples.jsonl
+  input_size: 512
+  source_group_balance_power: 1.0
+  edit_sampling_weights:
+    KEEP: 1.0
+    ADD: 1.0
+    DELETE: 1.5
+    RESHAPE: 1.1
+
+model:
+  image_channels: 3
+  prior_channels: 1
+  base_channels: 32
+  geometry_dim: 8
+  edit_classes: 4
+  dropout: 0.10
+  use_prior: true
+  hierarchical_edit: true
+  prior_guided_roi: false
+  segmentation_evidence: false
+  vector_change_encoder: true
+  vector_change_to_edit_head: true
+  temporal_change_head: true
+
+training:
+  device: auto
+  max_epochs: 100
+  min_epochs: 20
+  batch_size: 4
+  gradient_accumulation_steps: 4
+  num_workers: 4
+  learning_rate: 0.0002
+  weight_decay: 0.0001
+  grad_clip: 1.0
+  amp: true
+  resume: false
+  quality_score_mode: temporal_change
+  quality_delete_recall_weight: 0.25
+  checkpoint_every: 5
+  augmentation:
+    enabled: true
+    horizontal_flip_probability: 0.5
+    vertical_flip_probability: 0.5
+    rotate90_probability: 0.5
+    brightness: 0.10
+    contrast: 0.10
+    gaussian_noise: 0.01
+  early_stopping:
+    patience: 15
+    min_delta: 0.0001
+  scheduler:
+    factor: 0.5
+    patience: 4
+    threshold: 0.0001
+    min_lr: 0.000001
+
+monitoring:
+  tensorboard: true
+  progress_bar: true
+  visualize_every: 1
+  visualization_samples: 8
+  pause_poll_seconds: 10
+
+loss:
+  segmentation: 0.25
+  segmentation_bce: 1.0
+  segmentation_dice: 1.0
+  segmentation_focal: 0.5
+  focal_gamma: 2.0
+  focal_alpha: 0.75
+  edit: 0.5
+  edit_class_weights: auto
+  edit_class_weight_power: 0.25
+  edit_label_smoothing: 0.02
+  presence: 0.0
+  change: 0.0
+  temporal_change: 2.0
+  temporal_change_bce: 0.5
+  temporal_change_dice: 1.0
+  temporal_change_focal: 1.0
+  temporal_change_focal_alpha: 0.95
+  geometry: 0.5
+  geometry_beta: 0.1
+  false_edit: 0.75
+  missed_edit: 0.35
+  confidence: 0.2
+  confidence_target_mode: product
+
+output_dir: /mnt/mydisk/wh/ActiveMap/runs/updater/muno21_road_v4_explicit_change_scratch_seed20260727
+archive_dir: /home/wh/projects/activemap-v1/outputs/updater/muno21_road_v4_explicit_change_scratch_seed20260727

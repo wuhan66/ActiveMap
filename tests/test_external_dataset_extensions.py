@@ -56,7 +56,7 @@ def test_external_dataset_registry_is_valid() -> None:
     assert report["valid"] is True
     assert report["summary"] == {
         "datasets": 10,
-        "prepared": 3,
+        "prepared": 2,
         "terms_required": 4,
     }
     assert {row["id"] for row in report["datasets"]} >= {

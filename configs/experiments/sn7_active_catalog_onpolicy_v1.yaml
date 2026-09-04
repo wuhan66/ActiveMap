@@ -1,0 +1,39 @@
+schema_version: active-catalog-onpolicy-config-v1
+dataset: sn7
+method: iterative_on_policy_recurrent_preference_optimization
+base_policy: promoted_contextual_rl_or_previous_round
+rounds: 1
+rollouts_per_state: 4
+state_sampling:
+  train_states: 2048
+  val_states: 512
+  aoi_balanced: true
+generation:
+  temperature: 0.8
+  top_p: 0.95
+  max_acquisitions: 2
+  tool_mode: selective
+optimization:
+  algorithm: online_dpo
+  epochs_per_round: 1
+  learning_rate: 2.0e-6
+  beta: 0.05
+preference_return:
+  quality_cost_utility: 1.0
+  terminal_correct: 0.5
+  false_edit: -1.0
+  missed_edit: -0.75
+protocol:
+  require_same_rollout_and_updated_adapter: true
+  compare_only_matched_observable_states: true
+  require_same_tool_mode_reference: true
+  require_recurrent_execution: true
+  require_executable_writeback: true
+  test_policy: validation_only
+claim_boundary: on_policy_recurrent_preference_optimization_not_policy_gradient_rl
+ablations:
+  - offline_preferences
+  - greedy_collection
+  - no_tool_during_collection
+  - two_rollouts_per_state
+  - no_safety_return

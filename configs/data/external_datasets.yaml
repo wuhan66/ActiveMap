@@ -37,7 +37,7 @@ datasets:
     source_url: https://kth-rpl.github.io/ArgoTweak/
     code_url: https://github.com/KTH-RPL/ArgoTweak_baselines
     license_status: review_required
-    status: prepared
+    status: balanced_24_8_data_and_official_proposals_ready
 
   - id: tbv
     display_name: Trust but Verify
